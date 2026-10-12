@@ -4,7 +4,8 @@ import { RequireRole, RequireSession } from './auth/guards';
 import { LoginPage } from './pages/LoginPage/LoginPage';
 import { RegisterPage } from './pages/RegisterPage/RegisterPage';
 import { CartPage } from './pages/CartPage/CartPage';
-import { AdminProductsPage } from './pages/AdminProductsPage/AdminProductsPage';
+import { ItemPage } from './pages/ItemPage/ItemPage';
+import { AdminCatalogPage } from './pages/AdminProductsPage/AdminProductsPage';
 import { StorePage } from './pages/StorePage/StorePage';
 import { AdminOrdersPage, MyOrdersPage } from './pages/OrdersPage/OrdersPage';
 import { PaymentResultPage } from './pages/PaymentResultPage/PaymentResultPage';
@@ -20,6 +21,9 @@ export function App() {
             se pide recién al pagar. */}
         <Route path="/" element={<StorePage />} />
         <Route path="/carrito" element={<CartPage />} />
+        {/* Detalle con el carrusel de fotos. Público, igual que la tienda. */}
+        <Route path="/producto/:id" element={<ItemPage kind="producto" />} />
+        <Route path="/combo/:id" element={<ItemPage kind="combo" />} />
         <Route
           path="/mis-compras"
           element={
@@ -45,7 +49,7 @@ export function App() {
           element={
             <RequireSession>
               <RequireRole role="ADMIN">
-                <AdminProductsPage />
+                <AdminCatalogPage />
               </RequireRole>
             </RequireSession>
           }

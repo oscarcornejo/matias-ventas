@@ -1,28 +1,45 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type RefObject } from 'react';
 import { api, ApiError } from '../../api/client';
-import { ImageError, prepareImage } from '../../lib/image';
 import { formatCLP } from '../../../shared/format';
-import { MAX_PRODUCT_NAME, productImageUrl, type AdminProduct } from '../../../shared/products';
+import { MAX_PRODUCT_NAME, coverUrl, type AdminProduct, type AdminPromo } from '../../../shared/products';
 import { Loading } from '../../components/Loading/Loading';
 import { Icon } from '../../components/Icon/Icon';
+import { PromoForm, PromoRow } from './PromoEditor';
+import { Reorderable } from '../../components/Reorderable/Reorderable';
+import { ImageManager } from '../../components/ImageManager/ImageManager';
 import styles from './AdminProductsPage.module.scss';
 
 /** Emojis de dulces para usar mientras el producto no tiene foto. */
 const EMOJIS = ['🍪', '🍬', '🍫', '🍭', '🧁', '🍩', '🍰', '🍿', '🥤', '🍌'];
 
-export function AdminProductsPage() {
+/**
+ * Una sola sección para todo el catálogo: productos sueltos y combos, en la misma
+ * lista y con el mismo orden que verán los compradores.
+ *
+ * Antes eran dos páginas. Se unieron porque en la tienda aparecen mezclados, y
+ * ordenarlos por separado significaba administrar a ciegas un orden combinado que
+ * no se podía ver en ninguna pantalla.
+ */
+export function AdminCatalogPage() {
   const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [promos, setPromos] = useState<AdminPromo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [creandoCombo, setCreandoCombo] = useState(false);
+  const [editandoCombo, setEditandoCombo] = useState<AdminPromo | null>(null);
 
   const cargar = useCallback(async () => {
     setLoading(true);
     try {
-      const { products: list } = await api.adminProducts();
-      setProducts(list);
+      const [{ products: listaP }, { promos: listaC }] = await Promise.all([
+        api.adminProducts(),
+        api.adminPromos(),
+      ]);
+      setProducts(listaP);
+      setPromos(listaC);
       setError(null);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'No pudimos cargar los productos.');
+      setError(err instanceof ApiError ? err.message : 'No pudimos cargar el catálogo.');
     } finally {
       setLoading(false);
     }
@@ -32,16 +49,65 @@ export function AdminProductsPage() {
     void cargar();
   }, [cargar]);
 
+  // Una sola lista ordenada por posición: así se ve y se arrastra igual que en la tienda.
+  const catalogo: (AdminProduct | AdminPromo)[] = [...products, ...promos].sort(
+    (a, b) => a.position - b.position,
+  );
+
+  async function guardarOrden(ids: string[]) {
+    const porId = new Map(catalogo.map((item) => [item.id, item]));
+    const ordenado = ids.flatMap((id) => {
+      const item = porId.get(id);
+      return item ? [item] : [];
+    });
+
+    // Optimista: se reordena en pantalla y después se confirma en el servidor.
+    setProducts(ordenado.filter((i): i is AdminProduct => i.kind === 'producto'));
+    setPromos(ordenado.filter((i): i is AdminPromo => i.kind === 'combo'));
+
+    await api.saveOrder(ordenado.map((item) => ({ id: item.id, kind: item.kind })));
+    await cargar();
+  }
+
+  const cerrarCombo = async () => {
+    setCreandoCombo(false);
+    setEditandoCombo(null);
+    await cargar();
+  };
+
   return (
-    <section aria-labelledby="productos-admin-titulo" className={styles.page}>
-      <h1 id="productos-admin-titulo">Productos</h1>
+    <section aria-labelledby="catalogo-titulo" className={styles.page}>
+      <h1 id="catalogo-titulo">Productos</h1>
       <p className={styles.lead}>
-        Lo que esté visible aquí es lo que ven tus compañeros en la tienda.
+        Lo que esté visible aquí es lo que ven tus compañeros, en este mismo orden.
+        Arrastra para moverlos.
       </p>
 
-      <NewProduct onCreated={cargar} />
+      {!creandoCombo && !editandoCombo && (
+        <div className={styles.acciones}>
+          <NewProduct onCreated={cargar} />
+          {products.length > 0 && (
+            <button type="button" className={styles.secondary} onClick={() => setCreandoCombo(true)}>
+              <Icon name="mas" size={18} />
+              Crear combo
+            </button>
+          )}
+        </div>
+      )}
 
-      {loading && <Loading label="Cargando los productos…" />}
+      {(creandoCombo || editandoCombo) && (
+        <PromoForm
+          products={products}
+          promo={editandoCombo}
+          onDone={cerrarCombo}
+          onCancel={() => {
+            setCreandoCombo(false);
+            setEditandoCombo(null);
+          }}
+        />
+      )}
+
+      {loading && <Loading label="Cargando el catálogo…" />}
       {error && (
         <div className={styles.error} role="alert">
           <p>{error}</p>
@@ -51,12 +117,20 @@ export function AdminProductsPage() {
         </div>
       )}
 
-      {!loading && !error && (
-        <ul role="list" className={styles.list}>
-          {products.map((product) => (
-            <ProductRow key={product.id} product={product} onChanged={cargar} />
-          ))}
-        </ul>
+      {!loading && !error && catalogo.length === 0 && (
+        <p className={styles.empty}>Todavía no hay nada en el catálogo. Crea el primer producto.</p>
+      )}
+
+      {!loading && !error && catalogo.length > 0 && (
+        <Reorderable items={catalogo} onReorder={(ids) => void guardarOrden(ids)}>
+          {(item) =>
+            item.kind === 'combo' ? (
+              <PromoRow promo={item} onEdit={() => setEditandoCombo(item)} onChanged={cargar} />
+            ) : (
+              <ProductRow product={item} onChanged={cargar} />
+            )
+          }
+        </Reorderable>
       )}
     </section>
   );
@@ -170,21 +244,18 @@ function ProductRow({ product, onChanged }: { product: AdminProduct; onChanged: 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editando, setEditando] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [devolverFoco, setDevolverFoco] = useState(false);
   const nombreRef = useRef<HTMLInputElement>(null);
   const editarRef = useRef<HTMLButtonElement>(null);
-  const imagen = productImageUrl(product);
+  const portada = coverUrl(product);
 
-  const [devolverFoco, setDevolverFoco] = useState(false);
-
-  // Al abrir la edición el foco entra al primer campo.
   useEffect(() => {
     if (editando) nombreRef.current?.focus();
   }, [editando]);
 
-  // Al cerrarla vuelve al botón que la abrió, para no perder el lugar con teclado.
-  // Tiene que ser un efecto y no un callback: el botón está dentro de un bloque
-  // con `hidden` mientras se edita, y enfocar algo oculto no hace nada.
+  // Al cerrar la edición el foco vuelve al botón que la abrió. Tiene que ser un
+  // efecto: el botón está dentro de un bloque con `hidden` mientras se edita, y
+  // enfocar algo oculto no hace nada.
   useEffect(() => {
     if (!editando && devolverFoco) {
       editarRef.current?.focus();
@@ -205,7 +276,7 @@ function ProductRow({ product, onChanged }: { product: AdminProduct; onChanged: 
       await accion();
       await onChanged();
     } catch (err) {
-      if (err instanceof ImageError || err instanceof ApiError) setError(err.message);
+      if (err instanceof ApiError) setError(err.message);
       else setError('Algo salió mal. Inténtalo de nuevo.');
     } finally {
       setBusy(false);
@@ -213,107 +284,71 @@ function ProductRow({ product, onChanged }: { product: AdminProduct; onChanged: 
   }
 
   return (
-    <li className={styles.row} data-oculto={product.visible ? undefined : 'true'}>
-      <span className={styles.thumb}>
-        {imagen ? (
-          <img src={imagen} alt="" className={styles.thumbImg} />
-        ) : (
-          <span aria-hidden="true">{product.emoji}</span>
-        )}
-      </span>
+    <div className={styles.row} data-oculto={product.visible ? undefined : 'true'}>
+      <div className={styles.rowHead}>
+        <span className={styles.thumb}>
+          {portada ? (
+            <img src={portada} alt="" className={styles.thumbImg} />
+          ) : (
+            <span aria-hidden="true">{product.emoji}</span>
+          )}
+        </span>
 
-      {editando ? (
-        <EditProduct
-          product={product}
-          nombreRef={nombreRef}
-          busy={busy}
-          onCancel={cerrarEdicion}
-          onSave={async (cambios) => {
-            await conAviso(() => api.updateProduct(product.id, cambios));
-            cerrarEdicion();
-          }}
-        />
-      ) : (
-        <div className={styles.rowInfo}>
-          <p className={styles.rowName}>{product.name}</p>
-          <p className={styles.rowPrice}>{formatCLP(product.price)}</p>
-        </div>
-      )}
-
-      <div className={styles.rowActions} hidden={editando}>
-        <button
-          ref={editarRef}
-          type="button"
-          className={styles.secondary}
-          disabled={busy}
-          onClick={() => setEditando(true)}
-        >
-          Editar
-          <span className="visually-hidden"> {product.name}</span>
-        </button>
-
-        {/*
-          Acepta archivos desde cualquier dispositivo: no se fuerza la cámara.
-          Queda fuera del árbol de accesibilidad porque el botón "Subir foto" es
-          el control real; si no, un lector de pantalla anunciaría dos controles
-          para la misma acción.
-        */}
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          className="visually-hidden"
-          tabIndex={-1}
-          aria-hidden="true"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            e.target.value = '';
-            if (!file) return;
-            void conAviso(async () => {
-              const lista = await prepareImage(file);
-              await api.uploadProductImage(product.id, lista.type, lista.data);
-            });
-          }}
-        />
-        <button
-          type="button"
-          className={styles.secondary}
-          disabled={busy}
-          onClick={() => fileRef.current?.click()}
-        >
-          {imagen ? 'Cambiar foto' : 'Subir foto'}
-        </button>
-
-        {imagen && (
-          <button
-            type="button"
-            className={styles.secondary}
-            disabled={busy}
-            onClick={() => void conAviso(() => api.deleteProductImage(product.id))}
-          >
-            Quitar foto
-          </button>
-        )}
-
-        <label className={styles.toggle}>
-          <input
-            type="checkbox"
-            checked={product.visible}
-            disabled={busy}
-            onChange={(e) =>
-              void conAviso(() => api.updateProduct(product.id, { visible: e.target.checked }))
-            }
+        {editando ? (
+          <EditProduct
+            product={product}
+            nombreRef={nombreRef}
+            busy={busy}
+            onCancel={cerrarEdicion}
+            onSave={async (cambios) => {
+              await conAviso(() => api.updateProduct(product.id, cambios));
+              cerrarEdicion();
+            }}
           />
-          <span>{product.visible ? 'Visible' : 'Oculto'}</span>
-        </label>
+        ) : (
+          <>
+            <div className={styles.rowInfo}>
+              <p className={styles.rowName}>{product.name}</p>
+              <p className={styles.rowPrice}>{formatCLP(product.price)}</p>
+            </div>
+
+            {/* En la misma línea que el nombre: una fila por producto, no una pila. */}
+            <div className={styles.rowActions}>
+              <button
+                ref={editarRef}
+                type="button"
+                className={styles.secondary}
+                disabled={busy}
+                onClick={() => setEditando(true)}
+              >
+                Editar
+                <span className="visually-hidden"> {product.name}</span>
+              </button>
+
+              <label className={styles.toggle}>
+                <input
+                  type="checkbox"
+                  checked={product.visible}
+                  disabled={busy}
+                  onChange={(e) => void conAviso(() => api.updateProduct(product.id, { visible: e.target.checked }))}
+                />
+                <span>{product.visible ? 'Visible' : 'Oculto'}</span>
+              </label>
+            </div>
+          </>
+        )}
       </div>
+
+      {!editando && (
+        <ImageManager kind="producto" itemId={product.id} images={product.images} onChanged={onChanged} />
+      )}
 
       {error && (
         <p className={styles.rowError} role="alert">
           {error}
         </p>
       )}
-    </li>
+    </div>
   );
 }
 

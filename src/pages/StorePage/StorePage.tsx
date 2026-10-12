@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { useSession } from '../../auth/SessionContext';
 import { useCatalog } from '../../catalog/CatalogContext';
+import type { CatalogItem } from '../../../shared/products';
 import { useCart } from '../../catalog/useCart';
 import { useCartStore } from '../../store/cart';
 import { canUseCart } from '../../../shared/permissions';
@@ -15,7 +16,7 @@ export function StorePage() {
   const { user } = useSession();
   // La visita sin cuenta compra igual que un cliente: arma el carrito y se registra al pagar.
   const showCart = canUseCart(user?.role ?? null);
-  const { products, loading, error, reload } = useCatalog();
+  const { items, loading, error, reload } = useCatalog();
 
   return (
     <div className={styles.page}>
@@ -23,7 +24,7 @@ export function StorePage() {
 
       <section aria-labelledby="productos-titulo" className={styles.catalog}>
         <h2 id="productos-titulo" className={styles.catalogTitle}>
-          {products.length === 1 ? 'El producto' : 'Los productos'}
+          {items.length === 1 ? 'El producto' : 'Los productos'}
         </h2>
 
         {loading && <Loading label="Cargando los productos…" />}
@@ -37,15 +38,13 @@ export function StorePage() {
           </div>
         )}
 
-        {!loading && !error && products.length === 0 && (
+        {!loading && !error && items.length === 0 && (
           <p className={styles.empty}>
             Todavía no hay productos a la venta. Vuelve a mirar más rato.
           </p>
         )}
 
-        {!loading && !error && products.length > 0 && (
-          showCart ? <ClientCatalog /> : <ProductList />
-        )}
+        {!loading && !error && items.length > 0 && (showCart ? <ClientCatalog /> : <ProductList />)}
       </section>
 
       {showCart && <MobileBar />}
@@ -90,20 +89,20 @@ function Hero({ isAdmin }: { isAdmin: boolean }) {
   );
 }
 
-function ProductList({ onAdd }: { onAdd?: (id: string) => void }) {
-  const { products } = useCatalog();
+function ProductList({ onAdd }: { onAdd?: (item: CatalogItem) => void }) {
+  const { items } = useCatalog();
   const lines = useCartStore((state) => state.lines);
   return (
     <ul role="list" className={styles.grid}>
-      {products.map((product, index) => (
-        <li key={product.id}>
+      {items.map((item, index) => (
+        <li key={item.id}>
           <ProductCard
-            product={product}
+            item={item}
             tone={index}
             {...(onAdd
               ? {
-                  onAdd: () => onAdd(product.id),
-                  quantityInCart: lines.find((line) => line.productId === product.id)?.quantity ?? 0,
+                  onAdd: () => onAdd(item),
+                  quantityInCart: lines.find((line) => line.id === item.id)?.quantity ?? 0,
                 }
               : {})}
           />
@@ -115,14 +114,12 @@ function ProductList({ onAdd }: { onAdd?: (id: string) => void }) {
 
 function ClientCatalog() {
   const add = useCartStore((state) => state.add);
-  const { findProduct } = useCatalog();
   const [announcement, setAnnouncement] = useState('');
 
-  function handleAdd(productId: string) {
-    add(productId);
-    const product = findProduct(productId);
+  function handleAdd(item: CatalogItem) {
+    add(item.id, item.kind);
     // Se agrega un espacio invisible para que el lector de pantalla repita el aviso si se presiona dos veces.
-    setAnnouncement((prev) => `Agregaste ${product?.name ?? 'el producto'} al carrito.${prev.endsWith(' ') ? '' : ' '}`);
+    setAnnouncement((prev) => `Agregaste ${item.name} al carrito.${prev.endsWith(' ') ? '' : ' '}`);
   }
 
   return (

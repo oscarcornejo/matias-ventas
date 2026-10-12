@@ -11,7 +11,7 @@ describe('regla: el administrador no puede comprar (interfaz)', () => {
   beforeEach(() => {
     // Incluso con productos en el carrito del navegador, el admin no debe verlo.
     useCartStore.getState().clear();
-    useCartStore.getState().add('p-chirlito');
+    useCartStore.getState().add('p-chirlito', 'producto');
   });
 
   it('canPurchase solo permite al perfil cliente', () => {
@@ -45,11 +45,12 @@ describe('regla: el administrador no puede comprar (interfaz)', () => {
 
   it('el cliente sí ve "Agregar" en la tienda', () => {
     renderWithSession(<StorePage />, clientUser);
-    expect(screen.getAllByRole('button', { name: /Agregar/ })).toHaveLength(3);
+    // Tres productos sueltos y un combo.
+    expect(screen.getAllByRole('button', { name: /Agregar/ })).toHaveLength(4);
   });
 
   it('el cliente sí puede abrir el carrito y comprar', () => {
-    useCartStore.getState().add('p-chirlito');
+    useCartStore.getState().add('p-chirlito', 'producto');
     renderWithSession(<CartPage />, clientUser);
     expect(screen.getByRole('heading', { name: 'Tu carrito' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Comprar' })).toBeInTheDocument();

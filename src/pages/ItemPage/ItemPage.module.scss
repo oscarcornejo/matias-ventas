@@ -1,0 +1,152 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+}
+
+.volver {
+  @include button-secondary;
+  align-self: flex-start;
+  min-height: 2.5rem;
+  padding: 0 $space-4;
+  font-size: 0.875rem;
+
+  svg {
+    transform: rotate(180deg);
+  }
+
+  @include coarse-pointer {
+    min-height: $touch-target;
+  }
+}
+
+.contenido {
+  display: grid;
+  gap: $space-5;
+
+  @include up($bp-md) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: $space-6;
+    align-items: start;
+  }
+}
+
+.fotos {
+  min-width: 0;
+}
+
+.sinFoto {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 5;
+  border-radius: $radius-card;
+  background: $color-surface-sunken;
+  font-size: clamp(4rem, 2rem + 10vw, 7rem);
+
+  @include up($bp-md) {
+    aspect-ratio: 1;
+  }
+}
+
+.datos {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.promoTag {
+  @include pill;
+  padding: $space-1 $space-3;
+  background: $color-accent-soft;
+  color: $color-accent-hover;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.lleva {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  padding: $space-3 $space-4;
+  border-radius: $radius-field;
+  background: $color-surface-sunken;
+  font-size: 0.9375rem;
+}
+
+.precio {
+  @include numeric;
+  display: flex;
+  align-items: baseline;
+  gap: $space-3;
+  font-size: clamp(2rem, 1.6rem + 1.6vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: $tracking-tight;
+}
+
+.antes {
+  color: $color-text-muted;
+  font-size: 1.125rem;
+  font-weight: 600;
+  text-decoration: line-through;
+}
+
+.ahorro {
+  @include numeric;
+  color: $color-paid-text;
+  font-weight: 700;
+}
+
+.agregar {
+  @include button-primary;
+  width: 100%;
+  min-height: 3rem;
+  margin-top: $space-2;
+
+  @include up($bp-md) {
+    width: auto;
+    min-width: 16rem;
+  }
+}
+
+.enCarrito {
+  @include pill;
+  @include numeric;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 $space-2;
+  background: rgba($color-on-accent, 0.22);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.irAlCarrito {
+  @include button-secondary;
+  width: 100%;
+  min-height: 3rem;
+
+  @include up($bp-md) {
+    width: auto;
+    min-width: 16rem;
+  }
+}
+
+.nota {
+  padding: $space-3 $space-4;
+  border: 1px solid $color-border;
+  border-radius: $radius-field;
+  color: $color-text-muted;
+  font-size: 0.9375rem;
+}
+
+.error {
+  padding: $space-4;
+  border-radius: $radius-card;
+  background: $color-rejected-bg;
+  color: $color-rejected-text;
+}

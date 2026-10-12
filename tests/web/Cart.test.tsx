@@ -27,8 +27,8 @@ describe('<Cart />', () => {
   });
 
   it('muestra productos, subtotal y total en pesos chilenos', () => {
-    useCartStore.getState().add('p-chirlito');
-    useCartStore.getState().add('p-alfajor');
+    useCartStore.getState().add('p-chirlito', 'producto');
+    useCartStore.getState().add('p-alfajor', 'producto');
     renderCart();
 
     expect(screen.getByText('Chirlito Suffle')).toBeInTheDocument();
@@ -39,7 +39,7 @@ describe('<Cart />', () => {
 
   it('sube, baja y elimina productos actualizando el total', async () => {
     const user = userEvent.setup();
-    useCartStore.getState().add('p-grosso');
+    useCartStore.getState().add('p-grosso', 'producto');
     renderCart();
 
     const sumar = screen.getByRole('button', { name: 'Sumar uno de Grosso Crunch' });
@@ -60,7 +60,7 @@ describe('<Cart />', () => {
 
   it('se puede usar completamente con teclado', async () => {
     const user = userEvent.setup();
-    useCartStore.getState().add('p-chirlito');
+    useCartStore.getState().add('p-chirlito', 'producto');
     useCartStore.getState().increment('p-chirlito');
     renderCart();
 
@@ -88,20 +88,20 @@ describe('<Cart />', () => {
       .mockResolvedValue({ orderId: 'orden-1', initPoint: 'https://www.mercadopago.cl/checkout/v1/redirect?pref_id=1' });
     const assign = vi.spyOn(redirectTo, 'assign').mockImplementation(() => undefined);
 
-    useCartStore.getState().add('p-alfajor');
+    useCartStore.getState().add('p-alfajor', 'producto');
     useCartStore.getState().increment('p-alfajor');
     renderCart();
 
     await user.click(screen.getByRole('button', { name: 'Comprar' }));
 
-    expect(checkout).toHaveBeenCalledWith([{ productId: 'p-alfajor', quantity: 2 }]);
+    expect(checkout).toHaveBeenCalledWith([{ id: 'p-alfajor', kind: 'producto', quantity: 2 }]);
     expect(assign).toHaveBeenCalledWith('https://www.mercadopago.cl/checkout/v1/redirect?pref_id=1');
   });
 
   it('muestra el error si el servidor rechaza la compra', async () => {
     const user = userEvent.setup();
     vi.spyOn(api, 'checkout').mockRejectedValue(new ApiError('No pudimos conectar con Mercado Pago.', 502));
-    useCartStore.getState().add('p-grosso');
+    useCartStore.getState().add('p-grosso', 'producto');
     renderCart();
 
     await user.click(screen.getByRole('button', { name: 'Comprar' }));
@@ -116,7 +116,7 @@ describe('<Cart />', () => {
     await user.click(screen.getByRole('button', { name: /Agregar Grosso Crunch al carrito/ }));
     await user.click(screen.getByRole('button', { name: /Agregar Grosso Crunch al carrito/ }));
 
-    expect(useCartStore.getState().lines).toEqual([{ productId: 'p-grosso', quantity: 2 }]);
+    expect(useCartStore.getState().lines).toEqual([{ id: 'p-grosso', kind: 'producto', quantity: 2 }]);
     expect(screen.getByText(/Agregaste Grosso Crunch al carrito/)).toBeInTheDocument();
   });
 });

@@ -126,3 +126,110 @@
   font-size: 0.8125rem;
   font-weight: 700;
 }
+
+// --- Combo ------------------------------------------------------------------
+
+/// Marca que esto no es un producto suelto. Va antes del nombre porque cambia
+/// cómo se lee todo lo que sigue, no es un adorno sobre el título.
+.promoTag {
+  @include pill;
+  align-self: flex-start;
+  padding: $space-1 $space-2;
+  background: $color-accent-soft;
+  color: $color-accent-hover;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+/// Qué trae el combo: es la información que decide la compra.
+.contents {
+  color: $color-text-muted;
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+/// El precio normal, tachado junto al del combo.
+.before {
+  @include numeric;
+  margin-left: $space-2;
+  color: $color-text-muted;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: line-through;
+}
+
+.savings {
+  @include numeric;
+  color: $color-paid-text;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+/// El plano de color de un combo no rota: siempre el mismo, para que se
+/// distinga de un vistazo entre los productos sueltos.
+.card[data-combo='true'] .media {
+  background: $color-accent-soft;
+}
+
+// --- Fotos al pasar el mouse ------------------------------------------------
+
+/// Las fotos se apilan en el mismo hueco y solo una se ve a la vez: así cambiar
+/// de foto no mueve ni un píxel del resto de la tarjeta.
+.media {
+  position: relative;
+  overflow: hidden;
+}
+
+.photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 260ms $ease-out;
+}
+
+.photo[data-activa='true'] {
+  opacity: 1;
+}
+
+/// Indica cuántas fotos hay y en cuál va. Aparece solo con el mouse encima:
+/// en reposo la tarjeta no necesita este dato.
+.puntos {
+  position: absolute;
+  inset: auto 0 $space-2 0;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 180ms $ease-out;
+}
+
+/// Se muestran según el mismo estado que mueve las fotos, no según el :hover del
+/// CSS: así no pueden quedar visibles sin que haya rotación, ni al revés.
+.puntos[data-visible='true'] {
+  opacity: 1;
+}
+
+.punto {
+  width: 5px;
+  height: 5px;
+  border-radius: $radius-pill;
+  background: rgba($color-bg, 0.55);
+  box-shadow: 0 0 0 1px rgba($color-text, 0.18);
+  transition: background-color 180ms $ease-out;
+}
+
+.punto[data-activo='true'] {
+  background: $color-bg;
+}
+
+/// Sin mouse no hay "pasar por encima": la tarjeta muestra la portada y las
+/// demás fotos se ven al abrir el producto.
+@media (hover: none) {
+  .puntos {
+    display: none;
+  }
+}

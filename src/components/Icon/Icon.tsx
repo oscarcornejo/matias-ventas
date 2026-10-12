@@ -14,7 +14,10 @@ export type IconName =
   | 'flecha'
   | 'candado'
   | 'persona'
-  | 'salir';
+  | 'salir'
+  | 'subir'
+  | 'bajar'
+  | 'mover';
 
 const PATHS: Record<IconName, React.ReactNode> = {
   carrito: (
@@ -52,6 +55,19 @@ const PATHS: Record<IconName, React.ReactNode> = {
     <>
       <circle cx="12" cy="8.2" r="3.7" />
       <path d="M4.8 20.2a7.2 7.2 0 0 1 14.4 0" />
+    </>
+  ),
+  subir: <path d="M12 19.5v-15m-6.5 6.5L12 4.5l6.5 6.5" />,
+  bajar: <path d="M12 4.5v15m6.5-6.5L12 19.5l-6.5-6.5" />,
+  // Asa de arrastre: dos filas de puntos, el gesto universal de "muéveme".
+  mover: (
+    <>
+      <circle cx="9" cy="6" r="1.1" />
+      <circle cx="15" cy="6" r="1.1" />
+      <circle cx="9" cy="12" r="1.1" />
+      <circle cx="15" cy="12" r="1.1" />
+      <circle cx="9" cy="18" r="1.1" />
+      <circle cx="15" cy="18" r="1.1" />
     </>
   ),
   salir: (

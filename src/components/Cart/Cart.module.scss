@@ -275,3 +275,10 @@
   color: $color-rejected-text;
   font-size: 0.875rem;
 }
+
+/// Qué trae el combo, dentro del carrito.
+.itemContents {
+  color: $color-text-muted;
+  font-size: 0.75rem;
+  line-height: 1.3;
+}

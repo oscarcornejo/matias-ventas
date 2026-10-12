@@ -35,22 +35,74 @@ function duplicateEmailError() {
 describe('GET /api/productos', () => {
   it('el catálogo es público: se ve sin iniciar sesión', async () => {
     prismaMock.product.findMany.mockResolvedValue([
-      { id: 'p-chirlito', name: 'Chirlito Suffle', price: 300, emoji: '🍪', visible: true, position: 1, imageType: null },
+      { id: 'p-chirlito', name: 'Chirlito Suffle', price: 300, emoji: '🍪', visible: true, position: 1, images: [] },
     ]);
+    prismaMock.promo.findMany.mockResolvedValue([]);
 
     const response = await request(app).get('/api/productos');
 
     expect(response.status).toBe(200);
-    expect(response.body.products).toEqual([
-      { id: 'p-chirlito', name: 'Chirlito Suffle', price: 300, emoji: '🍪', hasImage: false },
+    expect(response.body.items).toEqual([
+      { kind: 'producto', id: 'p-chirlito', name: 'Chirlito Suffle', price: 300, emoji: '🍪', images: [] },
     ]);
   });
 
-  it('solo entrega los productos visibles', async () => {
+  it('entrega productos y combos mezclados por su posición', async () => {
+    prismaMock.product.findMany.mockResolvedValue([
+      { id: 'p-chirlito', name: 'Chirlito Suffle', price: 300, emoji: '🍪', visible: true, position: 1, images: [] },
+      { id: 'p-grosso', name: 'Grosso Crunch', price: 200, emoji: '🍬', visible: true, position: 3, images: [] },
+    ]);
+    prismaMock.promo.findMany.mockResolvedValue([
+      {
+        id: 'c-recreo',
+        name: 'Combo recreo',
+        price: 600,
+        emoji: '🎁',
+        visible: true,
+        position: 2,
+        images: [],
+        items: [
+          { quantity: 1, product: { id: 'p-chirlito', name: 'Chirlito Suffle', emoji: '🍪', price: 300, visible: true } },
+          { quantity: 2, product: { id: 'p-grosso', name: 'Grosso Crunch', emoji: '🍬', price: 200, visible: true } },
+        ],
+      },
+    ]);
+
+    const { body } = await request(app).get('/api/productos');
+
+    expect(body.items.map((i: { id: string }) => i.id)).toEqual(['p-chirlito', 'c-recreo', 'p-grosso']);
+    // El ahorro se calcula para mostrarlo; el precio que se cobra es el del combo.
+    expect(body.items[1]).toMatchObject({ kind: 'combo', price: 600, fullPrice: 700 });
+  });
+
+  it('esconde un combo si alguno de sus productos está oculto', async () => {
     prismaMock.product.findMany.mockResolvedValue([]);
+    prismaMock.promo.findMany.mockResolvedValue([
+      {
+        id: 'c-recreo',
+        name: 'Combo recreo',
+        price: 600,
+        emoji: '🎁',
+        visible: true,
+        position: 1,
+        images: [],
+        items: [
+          { quantity: 1, product: { id: 'p-grosso', name: 'Grosso Crunch', emoji: '🍬', price: 200, visible: false } },
+        ],
+      },
+    ]);
+
+    const { body } = await request(app).get('/api/productos');
+    expect(body.items).toEqual([]);
+  });
+
+  it('solo entrega lo visible', async () => {
+    prismaMock.product.findMany.mockResolvedValue([]);
+    prismaMock.promo.findMany.mockResolvedValue([]);
     await request(app).get('/api/productos');
     // El filtro lo aplica la consulta, no el navegador.
     expect(prismaMock.product.findMany.mock.calls[0]![0]).toMatchObject({ where: { visible: true } });
+    expect(prismaMock.promo.findMany.mock.calls[0]![0]).toMatchObject({ where: { visible: true } });
   });
 });
 

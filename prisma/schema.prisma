@@ -37,11 +37,6 @@ model Product {
   price Int
   /// Marcador visual mientras no haya fotografía.
   emoji String @default("🍬")
-  /// La foto vive en la base, no en disco: el sistema de archivos de los
-  /// servicios gestionados se borra en cada despliegue. El navegador la
-  /// redimensiona antes de subirla, así que son archivos chicos.
-  imageData Bytes?
-  imageType String?
   /// Oculto deja de aparecer en la tienda pero conserva el producto y su historial.
   visible   Boolean  @default(true)
   /// Orden de aparición en la tienda; a igualdad, por fecha de creación.
@@ -50,6 +45,63 @@ model Product {
   updatedAt DateTime @updatedAt
 
   @@index([visible, position])
+  promoItems PromoItem[]
+  images     Image[]
+}
+
+/// Fotos de un producto o de un combo. Varias por ítem, en el orden que define
+/// Matías: la primera es la que se ve en la tarjeta y el resto, en el carrusel.
+///
+/// Viven en la base y no en disco porque el sistema de archivos de los servicios
+/// gestionados se borra en cada despliegue. El navegador las redimensiona antes
+/// de subirlas, así que son archivos chicos.
+model Image {
+  id       String @id @default(cuid())
+  data     Bytes
+  type     String
+  position Int    @default(0)
+
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  promoId   String?
+  promo     Promo?   @relation(fields: [promoId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([productId, position])
+  @@index([promoId, position])
+}
+
+/// Combo: varios productos vendidos juntos a un precio fijo que define Matías.
+/// El precio del combo NO se calcula desde sus partes: es el que él escribe.
+model Promo {
+  id    String @id @default(cuid())
+  name  String
+  /// Precio del combo completo en pesos chilenos (entero).
+  price Int
+  emoji String @default("🎁")
+  /// Oculto deja de aparecer en la tienda pero conserva el combo y su historial.
+  visible   Boolean  @default(true)
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  items     PromoItem[]
+  images    Image[]
+
+  @@index([visible, position])
+}
+
+/// Qué lleva un combo y cuánto de cada cosa.
+model PromoItem {
+  id        String  @id @default(cuid())
+  promoId   String
+  promo     Promo   @relation(fields: [promoId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int
+
+  @@unique([promoId, productId])
+  @@index([productId])
 }
 
 model Order {

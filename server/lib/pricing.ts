@@ -12,7 +12,8 @@ export const checkoutSchema = z.object({
   items: z
     .array(
       z.object({
-        productId: z.string().min(1),
+        id: z.string().min(1),
+        kind: z.enum(['producto', 'combo']),
         quantity: z.number().int().min(1).max(MAX_QUANTITY_PER_PRODUCT),
       }),
     )
@@ -40,31 +41,79 @@ export class PricingError extends Error {}
  * Calcula los montos en CLP leyendo el catálogo desde la base de datos.
  *
  * El precio que se cobra sale siempre de aquí, nunca del navegador. Un producto
- * oculto no se puede comprar aunque alguien conserve su id en el carrito.
+ * oculto no se puede comprar aunque alguien conserve su id en el carrito, y un
+ * combo tampoco si alguno de los productos que lo componen dejó de ofrecerse.
  */
 export async function priceCart(
   items: CheckoutInput['items'],
   db: PrismaClient = prisma,
 ): Promise<PricedCart> {
-  const quantities = new Map<string, number>();
+  const cantidades = new Map<string, { kind: 'producto' | 'combo'; quantity: number }>();
   for (const item of items) {
-    quantities.set(item.productId, (quantities.get(item.productId) ?? 0) + item.quantity);
+    const previo = cantidades.get(item.id);
+    cantidades.set(item.id, {
+      kind: item.kind,
+      quantity: (previo?.quantity ?? 0) + item.quantity,
+    });
   }
 
-  const found = await db.product.findMany({
-    where: { id: { in: [...quantities.keys()] }, visible: true },
-    select: { id: true, name: true, price: true },
-  });
-  const catalog = new Map(found.map((product) => [product.id, product]));
+  const idsProducto = [...cantidades].filter(([, v]) => v.kind === 'producto').map(([id]) => id);
+  const idsCombo = [...cantidades].filter(([, v]) => v.kind === 'combo').map(([id]) => id);
+
+  const [productos, combos] = await Promise.all([
+    idsProducto.length
+      ? db.product.findMany({
+          where: { id: { in: idsProducto }, visible: true },
+          select: { id: true, name: true, price: true },
+        })
+      : Promise.resolve([]),
+    idsCombo.length
+      ? db.promo.findMany({
+          where: { id: { in: idsCombo }, visible: true },
+          select: {
+            id: true,
+            name: true,
+            price: true,
+            items: {
+              select: { quantity: true, product: { select: { name: true, visible: true } } },
+            },
+          },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  const catalogoProductos = new Map(productos.map((p) => [p.id, p]));
+  const catalogoCombos = new Map(combos.map((p) => [p.id, p]));
 
   const lines: PricedLine[] = [];
-  for (const [productId, quantity] of quantities) {
-    const product = catalog.get(productId);
-    if (!product) throw new PricingError(`Producto no disponible: ${productId}`);
+  for (const [id, { kind, quantity }] of cantidades) {
     if (quantity > MAX_QUANTITY_PER_PRODUCT) {
       throw new PricingError(`Cantidad máxima por producto: ${MAX_QUANTITY_PER_PRODUCT}`);
     }
-    lines.push({ productId, name: product.name, unitPrice: product.price, quantity });
+
+    if (kind === 'producto') {
+      const producto = catalogoProductos.get(id);
+      if (!producto) throw new PricingError(`Producto no disponible: ${id}`);
+      lines.push({ productId: id, name: producto.name, unitPrice: producto.price, quantity });
+      continue;
+    }
+
+    const combo = catalogoCombos.get(id);
+    if (!combo) throw new PricingError(`Combo no disponible: ${id}`);
+    if (combo.items.length === 0 || combo.items.some((item) => !item.product.visible)) {
+      throw new PricingError(`Combo no disponible: ${id}`);
+    }
+
+    // El nombre guarda lo que lleva el combo: la orden tiene que alcanzar para
+    // que Matías lo prepare sin consultar el catálogo, y los precios de hoy no
+    // deben cambiar lo que dice una compra de ayer.
+    const detalle = combo.items.map((item) => `${item.quantity} ${item.product.name}`).join(' + ');
+    lines.push({
+      productId: id,
+      name: `${combo.name} (${detalle})`,
+      unitPrice: combo.price,
+      quantity,
+    });
   }
 
   const total = lines.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0);

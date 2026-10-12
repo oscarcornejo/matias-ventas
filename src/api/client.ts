@@ -1,5 +1,5 @@
 import type { CartItemInput, OrderDTO, SessionUser } from '../../shared/types';
-import type { AdminProduct, Product } from '../../shared/products';
+import type { AdminProduct, AdminPromo, CatalogItem } from '../../shared/products';
 
 export class ApiError extends Error {
   constructor(
@@ -39,9 +39,13 @@ export interface ProductInput {
   visible?: boolean;
 }
 
+export interface PromoInput extends ProductInput {
+  items: { productId: string; quantity: number }[];
+}
+
 export const api = {
   me: () => request<{ user: SessionUser }>('/auth/me'),
-  products: () => request<{ products: Product[] }>('/productos'),
+  catalog: () => request<{ items: CatalogItem[] }>('/productos'),
   login: (email: string, password?: string) =>
     request<{ user: SessionUser }>('/auth/login', {
       method: 'POST',
@@ -63,6 +67,30 @@ export const api = {
   adminOrders: () => request<{ orders: OrderDTO[] }>('/admin/orders'),
 
   adminProducts: () => request<{ products: AdminProduct[] }>('/admin/productos'),
+
+  /** La imagen ya viene redimensionada por el navegador (ver lib/image.ts). */
+  uploadImage: (kind: 'producto' | 'combo', itemId: string, type: string, data: string) =>
+    request<{ id: string }>(
+      `/admin/imagenes/${kind === 'combo' ? 'promociones' : 'productos'}/${encodeURIComponent(itemId)}`,
+      { method: 'POST', body: JSON.stringify({ type, data }) },
+    ),
+  deleteImage: (imageId: string) =>
+    request<void>(`/admin/imagenes/${encodeURIComponent(imageId)}`, { method: 'DELETE' }),
+  reorderImages: (ids: string[]) =>
+    request<void>('/admin/imagenes/orden', { method: 'PATCH', body: JSON.stringify({ ids }) }),
+
+  /** Guarda el orden del catálogo completo (productos y combos juntos). */
+  saveOrder: (items: { id: string; kind: 'producto' | 'combo' }[]) =>
+    request<void>('/admin/orden', { method: 'PATCH', body: JSON.stringify({ items }) }),
+
+  adminPromos: () => request<{ promos: AdminPromo[] }>('/admin/promociones'),
+  createPromo: (promo: PromoInput) =>
+    request<{ id: string }>('/admin/promociones', { method: 'POST', body: JSON.stringify(promo) }),
+  updatePromo: (id: string, promo: Partial<PromoInput>) =>
+    request<void>(`/admin/promociones/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(promo),
+    }),
   createProduct: (product: ProductInput) =>
     request<{ id: string }>('/admin/productos', { method: 'POST', body: JSON.stringify(product) }),
   updateProduct: (id: string, product: Partial<ProductInput>) =>
@@ -71,11 +99,4 @@ export const api = {
       body: JSON.stringify(product),
     }),
   /** La imagen ya viene redimensionada por el navegador (ver lib/image.ts). */
-  uploadProductImage: (id: string, type: string, data: string) =>
-    request<void>(`/admin/productos/${encodeURIComponent(id)}/imagen`, {
-      method: 'PUT',
-      body: JSON.stringify({ type, data }),
-    }),
-  deleteProductImage: (id: string) =>
-    request<void>(`/admin/productos/${encodeURIComponent(id)}/imagen`, { method: 'DELETE' }),
 };

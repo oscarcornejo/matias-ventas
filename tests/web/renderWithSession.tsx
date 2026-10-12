@@ -3,7 +3,7 @@ import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { SessionContext, type SessionContextValue } from '../../src/auth/SessionContext';
 import { CatalogContext, type CatalogContextValue } from '../../src/catalog/CatalogContext';
-import { findProductIn, type Product } from '../../shared/products';
+import { findItemIn, type CatalogItem } from '../../shared/products';
 import type { SessionUser } from '../../shared/types';
 
 export const clientUser: SessionUser = { id: 'u-cliente', email: 'cliente@correo.cl', role: 'CLIENTE' };
@@ -13,15 +13,28 @@ export const adminUser: SessionUser = { id: 'u-admin', email: 'matiasalecornejo@
  * Catálogo de prueba. El catálogo real lo administra Matías y vive en la base,
  * así que las pruebas traen el suyo en vez de depender de productos fijos.
  */
-export const CATALOGO_PRUEBA: Product[] = [
-  { id: 'p-chirlito', name: 'Chirlito Suffle', price: 300, emoji: '🍪', hasImage: false },
-  { id: 'p-grosso', name: 'Grosso Crunch', price: 200, emoji: '🍬', hasImage: false },
-  { id: 'p-alfajor', name: 'Alfajor Panchito', price: 400, emoji: '🍫', hasImage: false },
+export const CATALOGO_PRUEBA: CatalogItem[] = [
+  { kind: 'producto', id: 'p-chirlito', name: 'Chirlito Suffle', price: 300, emoji: '🍪', images: [] },
+  { kind: 'producto', id: 'p-grosso', name: 'Grosso Crunch', price: 200, emoji: '🍬', images: [] },
+  { kind: 'producto', id: 'p-alfajor', name: 'Alfajor Panchito', price: 400, emoji: '🍫', images: [] },
+  {
+    kind: 'combo',
+    id: 'c-recreo',
+    name: 'Combo recreo',
+    price: 600,
+    emoji: '🎁',
+    fullPrice: 700,
+    images: [],
+    items: [
+      { productId: 'p-chirlito', name: 'Chirlito Suffle', emoji: '🍪', quantity: 1 },
+      { productId: 'p-grosso', name: 'Grosso Crunch', emoji: '🍬', quantity: 2 },
+    ],
+  },
 ];
 
 interface Options {
   initialPath?: string;
-  products?: Product[];
+  products?: CatalogItem[];
   catalogLoading?: boolean;
   catalogError?: string | null;
 }
@@ -47,11 +60,11 @@ export function renderWithSession(
   };
 
   const catalog: CatalogContextValue = {
-    products,
+    items: products,
     loading: catalogLoading,
     error: catalogError,
     reload: () => undefined,
-    findProduct: (id) => findProductIn(products, id),
+    findItem: (id) => findItemIn(products, id),
   };
 
   return render(

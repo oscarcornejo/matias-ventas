@@ -124,35 +124,13 @@
   gap: $space-3;
 }
 
-.row {
-  @include card;
-  display: grid;
-  grid-template-columns: 3.5rem minmax(0, 1fr);
-  align-items: center;
-  gap: $space-3;
-  padding: $space-3;
-
-  @include up($bp-md) {
-    grid-template-columns: 3.5rem minmax(0, 1fr) auto;
-  }
-}
-
 /// Un producto oculto se ve apagado, pero legible: sigue siendo administrable.
-.row[data-oculto='true'] {
-  background: $color-surface-sunken;
-
-  .thumb,
-  .rowName,
-  .rowPrice {
-    opacity: 0.6;
-  }
-}
-
 .thumb {
   display: grid;
   place-items: center;
-  width: 3.5rem;
-  height: 3.5rem;
+  flex-shrink: 0;
+  width: 3rem;
+  height: 3rem;
   overflow: hidden;
   border-radius: $radius-field;
   background: $color-surface-sunken;
@@ -163,42 +141,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.rowInfo {
-  min-width: 0;
-}
-
-.rowName {
-  font-weight: 700;
-  letter-spacing: $tracking-tight;
-  overflow-wrap: anywhere;
-}
-
-.rowPrice {
-  @include numeric;
-  color: $color-text-muted;
-  font-size: 0.9375rem;
-}
-
-.rowActions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: $space-2;
-  grid-column: 1 / -1;
-
-  // Un `display` de autor le gana al display:none que el navegador aplica a
-  // [hidden]. Sin esto, al editar se verían a la vez el formulario y los
-  // botones normales de la fila.
-  &[hidden] {
-    display: none;
-  }
-
-  @include up($bp-md) {
-    grid-column: auto;
-    justify-content: flex-end;
-  }
 }
 
 .toggle {
@@ -223,15 +165,6 @@
   &:has(input:focus-visible) {
     @include focus-ring;
   }
-}
-
-.rowError {
-  grid-column: 1 / -1;
-  padding: $space-2 $space-3;
-  border-radius: $radius-field;
-  background: $color-rejected-bg;
-  color: $color-rejected-text;
-  font-size: 0.875rem;
 }
 
 .error {
@@ -261,6 +194,83 @@
   }
 }
 
+.editFields .field {
+  flex: 1 1 12rem;
+  max-width: none;
+}
+
+/// El precio es corto: no necesita el mismo ancho que el nombre.
+.fieldPrice {
+  flex: 0 1 9rem;
+}
+
+/// La fila ahora la envuelve <Reorderable>, así que el contenedor interno deja de
+/// ser una tarjeta y solo organiza su contenido.
+
+// --- Fila del catálogo ------------------------------------------------------
+// Una sola definición. Antes había cuatro apiladas: la primera traía
+// `align-items: center` y la última cambiaba a columna sin resetearlo, así que
+// el contenido quedaba centrado con 434px de vacío a su izquierda en escritorio.
+
+.row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: $space-3;
+}
+
+/// Primera línea: miniatura, nombre y precio a la izquierda; acciones a la derecha.
+.rowHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $space-3;
+}
+
+.row[data-oculto='true'] {
+  opacity: 0.72;
+}
+
+/// Crece para empujar las acciones a la derecha, pero puede encogerse: si no,
+/// las acciones se iban a una segunda línea y dejaban un hueco en el medio.
+.rowInfo {
+  flex: 1 1 8rem;
+  min-width: 0;
+}
+
+.rowName {
+  font-weight: 700;
+  letter-spacing: $tracking-tight;
+  overflow-wrap: anywhere;
+}
+
+.rowPrice {
+  @include numeric;
+  color: $color-text-muted;
+  font-size: 0.9375rem;
+}
+
+.rowActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $space-2;
+
+  // Un `display` de autor le gana al display:none que el navegador aplica a
+  // [hidden]: sin esto, al editar se verían a la vez el formulario y los botones.
+  &[hidden] {
+    display: none;
+  }
+}
+
+.rowError {
+  padding: $space-2 $space-3;
+  border-radius: $radius-field;
+  background: $color-rejected-bg;
+  color: $color-rejected-text;
+  font-size: 0.875rem;
+}
+
 .editFields {
   display: flex;
   flex-wrap: wrap;
@@ -272,7 +282,15 @@
   max-width: none;
 }
 
-/// El precio es corto: no necesita el mismo ancho que el nombre.
-.fieldPrice {
-  flex: 0 1 9rem;
+/// Desde tablet, nombre y acciones comparten una sola línea: la fila ocupa el
+/// alto de su contenido y no el de una pila de bloques.
+@include up($bp-md) {
+  .rowHead {
+    flex-wrap: nowrap;
+  }
+
+  .rowActions {
+    flex-shrink: 0;
+    margin-left: auto;
+  }
 }

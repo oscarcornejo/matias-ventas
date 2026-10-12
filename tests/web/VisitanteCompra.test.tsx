@@ -44,11 +44,11 @@ describe('visita sin cuenta: ve la tienda y se registra para comprar', () => {
 
     await user.click(screen.getByRole('button', { name: /Agregar Grosso Crunch al carrito/ }));
 
-    expect(useCartStore.getState().lines).toEqual([{ productId: 'p-grosso', quantity: 1 }]);
+    expect(useCartStore.getState().lines).toEqual([{ id: 'p-grosso', kind: 'producto', quantity: 1 }]);
   });
 
   it('el carrito tiene su propia página y muestra el total', () => {
-    useCartStore.getState().add('p-grosso');
+    useCartStore.getState().add('p-grosso', 'producto');
     useCartStore.getState().increment('p-grosso');
     renderTienda(null, '/carrito');
 
@@ -58,7 +58,7 @@ describe('visita sin cuenta: ve la tienda y se registra para comprar', () => {
   });
 
   it('avisa en el carrito que se pedirá una cuenta antes de pagar', () => {
-    useCartStore.getState().add('p-chirlito');
+    useCartStore.getState().add('p-chirlito', 'producto');
     renderTienda(null, '/carrito');
 
     expect(screen.getByText(/Te pediremos crear una cuenta antes de pagar/)).toBeInTheDocument();
@@ -67,7 +67,7 @@ describe('visita sin cuenta: ve la tienda y se registra para comprar', () => {
   it('"Comprar" lleva al registro y no llama al checkout', async () => {
     const user = userEvent.setup();
     const checkout = vi.spyOn(api, 'checkout');
-    useCartStore.getState().add('p-alfajor');
+    useCartStore.getState().add('p-alfajor', 'producto');
     renderTienda(null, '/carrito');
 
     await user.click(screen.getByRole('button', { name: 'Comprar' }));
@@ -78,16 +78,16 @@ describe('visita sin cuenta: ve la tienda y se registra para comprar', () => {
 
   it('el carrito sobrevive al registro: sigue guardado en el navegador', async () => {
     const user = userEvent.setup();
-    useCartStore.getState().add('p-alfajor');
+    useCartStore.getState().add('p-alfajor', 'producto');
     renderTienda(null, '/carrito');
 
     await user.click(screen.getByRole('button', { name: 'Comprar' }));
 
-    expect(useCartStore.getState().lines).toEqual([{ productId: 'p-alfajor', quantity: 1 }]);
+    expect(useCartStore.getState().lines).toEqual([{ id: 'p-alfajor', kind: 'producto', quantity: 1 }]);
   });
 
   it('desde la tienda, la barra de celular lleva al carrito', async () => {
-    useCartStore.getState().add('p-chirlito');
+    useCartStore.getState().add('p-chirlito', 'producto');
     renderTienda();
 
     const irAlCarrito = screen.getByRole('link', { name: /Ver carrito/ });
@@ -115,7 +115,7 @@ describe('visita sin cuenta: ve la tienda y se registra para comprar', () => {
   });
 
   it('el administrador sigue sin ver el carrito en la tienda pública', () => {
-    useCartStore.getState().add('p-chirlito');
+    useCartStore.getState().add('p-chirlito', 'producto');
     renderWithSession(<StorePage />, adminUser);
 
     expect(screen.queryByRole('button', { name: /Agregar/ })).not.toBeInTheDocument();

@@ -35,7 +35,7 @@ export function Cart() {
 
       <ul role="list" className={styles.list}>
         {lines.map((line) => (
-          <CartItem key={line.product.id} line={line} />
+          <CartItem key={line.item.id} line={line} />
         ))}
       </ul>
 

@@ -1,0 +1,450 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+}
+
+.lead {
+  @include prose;
+  color: $color-text-muted;
+}
+
+.primary {
+  @include button-primary;
+  align-self: flex-start;
+}
+
+.secondary {
+  @include button-secondary;
+  min-height: 2.5rem;
+  padding: 0 $space-3;
+  font-size: 0.875rem;
+
+  @include coarse-pointer {
+    min-height: $touch-target;
+  }
+}
+
+// --- Formulario de alta -----------------------------------------------------
+
+.form {
+  @include card;
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+  padding: $space-4;
+
+  @include up($bp-md) {
+    padding: $space-5;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  max-width: 22rem;
+
+  label {
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+
+  input {
+    @include field;
+  }
+}
+
+.emojis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  legend {
+    padding: 0 0 $space-2;
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+}
+
+/// El radio real queda oculto pero sigue recibiendo foco: el recuadro lo refleja.
+.emojiOption {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: $touch-target;
+  height: $touch-target;
+  border: 1px solid $color-border;
+  border-radius: $radius-field;
+  font-size: 1.375rem;
+  cursor: pointer;
+
+  input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  &:has(input:checked) {
+    border-color: $color-accent;
+    background: $color-accent-soft;
+  }
+
+  &:has(input:focus-visible) {
+    @include focus-ring;
+  }
+}
+
+.formActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-3;
+}
+
+.formError {
+  padding: $space-3;
+  border-radius: $radius-field;
+  background: $color-rejected-bg;
+  color: $color-rejected-text;
+  font-size: 0.9375rem;
+}
+
+// --- Lista de productos -----------------------------------------------------
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+/// Un producto oculto se ve apagado, pero legible: sigue siendo administrable.
+.thumb {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 3rem;
+  height: 3rem;
+  overflow: hidden;
+  border-radius: $radius-field;
+  background: $color-surface-sunken;
+  font-size: 1.5rem;
+}
+
+.thumbImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+  min-height: $touch-target;
+  padding: 0 $space-3;
+  border: 1px solid $color-border;
+  border-radius: $radius-pill;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  input {
+    width: 1.125rem;
+    height: 1.125rem;
+    accent-color: $color-accent;
+    cursor: pointer;
+  }
+
+  &:has(input:focus-visible) {
+    @include focus-ring;
+  }
+}
+
+.error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  padding: $space-4;
+  border-radius: $radius-card;
+  background: $color-rejected-bg;
+  color: $color-rejected-text;
+}
+
+// --- Edición dentro de la fila ---------------------------------------------
+
+/// Ocupa el ancho disponible de la fila: en celular toma las dos columnas,
+/// porque dos campos no caben al lado de la miniatura.
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  grid-column: 1 / -1;
+
+  @include up($bp-md) {
+    grid-column: 2 / -1;
+  }
+}
+
+.editFields .field {
+  flex: 1 1 12rem;
+  max-width: none;
+}
+
+/// El precio es corto: no necesita el mismo ancho que el nombre.
+.fieldPrice {
+  flex: 0 1 9rem;
+}
+
+// --- Específico de combos ---------------------------------------------------
+
+.aviso,
+.empty {
+  @include prose;
+  padding: $space-4;
+  border: 1px solid $color-border;
+  border-radius: $radius-card;
+  background: $color-surface;
+  color: $color-text-muted;
+}
+
+.rowContents {
+  color: $color-text-muted;
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+.rowSavings {
+  @include pill;
+  margin-left: $space-2;
+  padding: 2px $space-2;
+  background: $color-paid-bg;
+  color: $color-paid-text;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/// Un combo que no se puede vender tiene que decirlo donde se mira, no en un log.
+.bloqueado {
+  grid-column: 1 / -1;
+  padding: $space-2 $space-3;
+  border-radius: $radius-field;
+  background: $color-pending-bg;
+  color: $color-pending-text;
+  font-size: 0.875rem;
+}
+
+// --- Composición del combo --------------------------------------------------
+
+.lineas {
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  legend {
+    padding: 0 0 $space-2;
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+}
+
+.sinLineas {
+  color: $color-text-muted;
+  font-size: 0.9375rem;
+}
+
+.lineaList {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  margin-bottom: $space-3;
+}
+
+.linea {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-2 $space-3;
+  border: 1px solid $color-border;
+  border-radius: $radius-field;
+}
+
+.lineaNombre {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.ocultoTag {
+  @include pill;
+  margin-left: $space-2;
+  padding: 2px $space-2;
+  background: $color-pending-bg;
+  color: $color-pending-text;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.lineaCantidad input {
+  @include field;
+  @include numeric;
+  width: 4.5rem;
+  min-height: 2.5rem;
+  text-align: center;
+}
+
+.quitar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: $touch-target;
+  height: $touch-target;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  border-radius: $radius-pill;
+  background: transparent;
+  color: $color-text-muted;
+  cursor: pointer;
+
+  @include hover {
+    background: $color-rejected-bg;
+    color: $color-rejected-text;
+  }
+}
+
+.agregar select {
+  @include field;
+  width: auto;
+  min-width: 14rem;
+  max-width: 100%;
+  padding-right: $space-4;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+// --- La cuenta del combo ----------------------------------------------------
+
+.cuenta {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  padding: $space-4;
+  border-radius: $radius-card;
+  background: $color-surface-sunken;
+
+  strong {
+    @include numeric;
+  }
+}
+
+.ahorro {
+  @include numeric;
+  color: $color-paid-text;
+  font-weight: 700;
+}
+
+.sinAhorro {
+  color: $color-pending-text;
+  font-size: 0.9375rem;
+}
+
+/// La fila la envuelve <Reorderable>: el contenedor interno solo organiza.
+
+// --- Fila del catálogo ------------------------------------------------------
+// Una sola definición. Antes había cuatro apiladas: la primera traía
+// `align-items: center` y la última cambiaba a columna sin resetearlo, así que
+// el contenido quedaba centrado con 434px de vacío a su izquierda en escritorio.
+
+.row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: $space-3;
+}
+
+/// Primera línea: miniatura, nombre y precio a la izquierda; acciones a la derecha.
+.rowHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $space-3;
+}
+
+.row[data-oculto='true'] {
+  opacity: 0.72;
+}
+
+/// Crece para empujar las acciones a la derecha, pero puede encogerse: si no,
+/// las acciones se iban a una segunda línea y dejaban un hueco en el medio.
+.rowInfo {
+  flex: 1 1 8rem;
+  min-width: 0;
+}
+
+.rowName {
+  font-weight: 700;
+  letter-spacing: $tracking-tight;
+  overflow-wrap: anywhere;
+}
+
+.rowPrice {
+  @include numeric;
+  color: $color-text-muted;
+  font-size: 0.9375rem;
+}
+
+.rowActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $space-2;
+
+  // Un `display` de autor le gana al display:none que el navegador aplica a
+  // [hidden]: sin esto, al editar se verían a la vez el formulario y los botones.
+  &[hidden] {
+    display: none;
+  }
+}
+
+.rowError {
+  padding: $space-2 $space-3;
+  border-radius: $radius-field;
+  background: $color-rejected-bg;
+  color: $color-rejected-text;
+  font-size: 0.875rem;
+}
+
+.editFields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-3;
+}
+
+.editFields .field {
+  flex: 1 1 12rem;
+  max-width: none;
+}
+
+/// Desde tablet, nombre y acciones comparten una sola línea: la fila ocupa el
+/// alto de su contenido y no el de una pila de bloques.
+@include up($bp-md) {
+  .rowHead {
+    flex-wrap: nowrap;
+  }
+
+  .rowActions {
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+}

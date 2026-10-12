@@ -63,6 +63,15 @@ pedirle el dulce a Matías en persona.
   fijos**, y ningún texto de la interfaz debe decir cuántos hay.
 - Un producto oculto deja de verse en la tienda y no se puede comprar, pero se
   conserva junto con su historial de ventas. No existe borrado.
+- **Combos:** Matías puede juntar varios productos en un combo con precio fijo,
+  desde `/admin/promociones`. El precio del combo lo escribe él; el ahorro se
+  calcula solo y es informativo, nunca decide el precio.
+- Un combo con algún producto oculto **no se puede vender**, aunque el combo esté
+  visible: no se cobra algo que no se puede entregar. El panel dice qué lo bloquea.
+- Las órdenes guardan en el nombre lo que lleva el combo
+  ("Combo recreo (1 Chirlito Suffle + 2 Grosso Crunch)"), para que Matías pueda
+  prepararlo sin consultar el catálogo y para que cambios futuros de precio no
+  alteren lo que dice una compra pasada.
 - La tienda nació con Chirlito Suffle $300, Grosso Crunch $200 y Alfajor Panchito
   $400; eso es la siembra inicial de una base vacía, no una restricción.
 - El nombre de la marca es "Mati Ventas".

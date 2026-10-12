@@ -60,6 +60,11 @@ posición**, no por producto:
 
 Cuando un producto tiene foto, la foto ocupa el hueco completo y el plano queda detrás.
 
+**Los combos no rotan de color:** usan siempre `$color-accent-soft`, para que se
+distingan de un vistazo entre los productos sueltos. Su tarjeta lleva, en este orden,
+la etiqueta "Combo", el nombre, qué trae, el precio con el normal tachado al lado, y
+cuánto se ahorra.
+
 **Estado de pago.** Fondo suave + texto oscuro del mismo matiz, nunca gris.
 
 | Estado | Fondo | Texto |

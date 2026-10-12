@@ -49,7 +49,7 @@ describe('POST /api/checkout', () => {
       const response = await request(app)
         .post('/api/checkout')
         .set('Cookie', await sessionCookie('admin'))
-        .send({ items: [{ productId: 'p-chirlito', quantity: 1 }] });
+        .send({ items: [{ id: 'p-chirlito', kind: 'producto', quantity: 1 }] });
 
       expect(response.status).toBe(403);
       expect(response.body.error).toMatch(/administrador no puede realizar compras/);
@@ -68,7 +68,7 @@ describe('POST /api/checkout', () => {
       const response = await request(app)
         .post('/api/checkout')
         .set('Cookie', `${SESSION_COOKIE}=${forged}`)
-        .send({ items: [{ productId: 'p-chirlito', quantity: 1 }] });
+        .send({ items: [{ id: 'p-chirlito', kind: 'producto', quantity: 1 }] });
 
       expect(response.status).toBe(403);
       expect(prismaMock.order.create).not.toHaveBeenCalled();
@@ -78,7 +78,7 @@ describe('POST /api/checkout', () => {
   it('sin sesión responde 401', async () => {
     const response = await request(app)
       .post('/api/checkout')
-      .send({ items: [{ productId: 'p-chirlito', quantity: 1 }] });
+      .send({ items: [{ id: 'p-chirlito', kind: 'producto', quantity: 1 }] });
     expect(response.status).toBe(401);
   });
 
@@ -92,7 +92,7 @@ describe('POST /api/checkout', () => {
     const response = await request(app)
       .post('/api/checkout')
       .set('Cookie', `${SESSION_COOKIE}=${forged}`)
-      .send({ items: [{ productId: 'p-chirlito', quantity: 1 }] });
+      .send({ items: [{ id: 'p-chirlito', kind: 'producto', quantity: 1 }] });
     expect(response.status).toBe(401);
   });
 
@@ -103,8 +103,8 @@ describe('POST /api/checkout', () => {
       .send({
         items: [
           // Precio manipulado desde el navegador: debe ignorarse.
-          { productId: 'p-chirlito', quantity: 2, price: 1, unitPrice: 1 },
-          { productId: 'p-alfajor', quantity: 1 },
+          { id: 'p-chirlito', kind: 'producto', quantity: 2, price: 1, unitPrice: 1 },
+          { id: 'p-alfajor', kind: 'producto', quantity: 1 },
         ],
       });
 
@@ -142,13 +142,13 @@ describe('POST /api/checkout', () => {
     const unknown = await request(app)
       .post('/api/checkout')
       .set('Cookie', cookie)
-      .send({ items: [{ productId: 'producto-falso', quantity: 1 }] });
+      .send({ items: [{ id: 'producto-falso', kind: 'producto', quantity: 1 }] });
     expect(unknown.status).toBe(400);
 
     const negative = await request(app)
       .post('/api/checkout')
       .set('Cookie', cookie)
-      .send({ items: [{ productId: 'p-grosso', quantity: -3 }] });
+      .send({ items: [{ id: 'p-grosso', kind: 'producto', quantity: -3 }] });
     expect(negative.status).toBe(400);
 
     const empty = await request(app).post('/api/checkout').set('Cookie', cookie).send({ items: [] });
@@ -164,7 +164,7 @@ describe('POST /api/checkout', () => {
     const response = await request(app)
       .post('/api/checkout')
       .set('Cookie', await sessionCookie('cliente'))
-      .send({ items: [{ productId: 'p-grosso', quantity: 1 }] });
+      .send({ items: [{ id: 'p-grosso', kind: 'producto', quantity: 1 }] });
 
     expect(response.status).toBe(502);
     expect(prismaMock.order.delete).toHaveBeenCalledWith({ where: { id: 'orden-123' } });

@@ -51,13 +51,18 @@
 
 /// Solo aparece con sesión iniciada, que es cuando hay más de una página a la que ir.
 /// En celular ocupa una segunda fila completa; desde tablet vuelve a la misma línea.
+///
+/// Envuelve porque el administrador tiene cuatro secciones y en un teléfono no
+/// caben en una línea: medido a 390px, la última quedaba fuera de la pantalla.
 .nav {
   display: flex;
+  flex-wrap: wrap;
   order: 2;
   width: 100%;
   gap: $space-1;
 
   @include up($bp-md) {
+    flex-wrap: nowrap;
     order: 0;
     width: auto;
   }

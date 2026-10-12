@@ -27,8 +27,9 @@ export function CheckoutButton() {
     setError(null);
     try {
       // Solo se envían productos y cantidades: el servidor calcula los precios.
+      // Solo viajan id, tipo y cantidad: el servidor pone los precios.
       const { initPoint } = await api.checkout(
-        lines.map(({ productId, quantity }) => ({ productId, quantity })),
+        lines.map(({ id, kind, quantity }) => ({ id, kind, quantity })),
       );
       redirectTo.assign(initPoint);
     } catch (err) {

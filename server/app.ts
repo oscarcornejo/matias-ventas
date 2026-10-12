@@ -6,6 +6,9 @@ import { authRouter } from './routes/auth.js';
 import { checkoutRouter } from './routes/checkout.js';
 import { adminRouter, ordersRouter } from './routes/orders.js';
 import { adminProductsRouter, productsRouter } from './routes/products.js';
+import { adminPromosRouter } from './routes/promos.js';
+import { catalogOrderRouter } from './routes/catalog-order.js';
+import { adminImagesRouter, imagesRouter } from './routes/images.js';
 import { webhooksRouter } from './routes/webhooks.js';
 
 export function createApp(options: { serveStatic?: boolean } = {}) {
@@ -24,9 +27,13 @@ export function createApp(options: { serveStatic?: boolean } = {}) {
   app.use('/api/auth', authRouter);
   // Catálogo público: se puede ver la tienda sin cuenta. Comprar sí exige sesión.
   app.use('/api/productos', productsRouter);
+  app.use('/api/imagenes', imagesRouter);
   app.use('/api/checkout', checkoutRouter);
   app.use('/api/orders', ordersRouter);
   app.use('/api/admin/productos', adminProductsRouter);
+  app.use('/api/admin/promociones', adminPromosRouter);
+  app.use('/api/admin/orden', catalogOrderRouter);
+  app.use('/api/admin/imagenes', adminImagesRouter);
   app.use('/api/admin', adminRouter);
   app.use('/api/webhooks', webhooksRouter);
 

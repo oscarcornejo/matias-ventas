@@ -6,6 +6,15 @@ import { ADMIN_EMAIL } from '../../shared/permissions';
 export function createPrismaMock() {
   return {
     user: { findUnique: vi.fn(), create: vi.fn(), upsert: vi.fn() },
+    promo: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+    },
+    promoItem: { deleteMany: vi.fn(), createMany: vi.fn() },
+    $transaction: vi.fn(),
     product: {
       findMany: vi.fn(),
       findFirst: vi.fn(),

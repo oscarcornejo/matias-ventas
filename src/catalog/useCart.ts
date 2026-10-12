@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { useCatalog } from './CatalogContext';
 import { useCartStore } from '../store/cart';
-import type { Product } from '../../shared/products';
+import type { CatalogItem } from '../../shared/products';
 
 export interface CartLineView {
-  product: Product;
+  item: CatalogItem;
   quantity: number;
   subtotal: number;
 }
@@ -17,16 +17,16 @@ export interface CartLineView {
  */
 export function useCart(): { lines: CartLineView[]; total: number; ready: boolean } {
   const rawLines = useCartStore((state) => state.lines);
-  const { findProduct, loading } = useCatalog();
+  const { findItem, loading } = useCatalog();
 
   return useMemo(() => {
     const lines: CartLineView[] = [];
     for (const line of rawLines) {
-      const product = findProduct(line.productId);
-      if (!product) continue;
-      lines.push({ product, quantity: line.quantity, subtotal: product.price * line.quantity });
+      const item = findItem(line.id);
+      if (!item) continue;
+      lines.push({ item, quantity: line.quantity, subtotal: item.price * line.quantity });
     }
     const total = lines.reduce((sum, line) => sum + line.subtotal, 0);
     return { lines, total, ready: !loading };
-  }, [rawLines, findProduct, loading]);
+  }, [rawLines, findItem, loading]);
 }

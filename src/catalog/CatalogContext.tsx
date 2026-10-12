@@ -1,13 +1,14 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { api } from '../api/client';
-import { findProductIn, type Product } from '../../shared/products';
+import { findItemIn, type CatalogItem } from '../../shared/products';
 
 export interface CatalogContextValue {
-  products: Product[];
+  /** Productos sueltos y combos, mezclados en el orden que definió Matías. */
+  items: CatalogItem[];
   loading: boolean;
   error: string | null;
   reload: () => void;
-  findProduct: (id: string) => Product | undefined;
+  findItem: (id: string) => CatalogItem | undefined;
 }
 
 export const CatalogContext = createContext<CatalogContextValue | null>(null);
@@ -17,7 +18,7 @@ export const CatalogContext = createContext<CatalogContextValue | null>(null);
  * código; ahora lo administra Matías, así que puede cambiar sin volver a publicar.
  */
 export function CatalogProvider({ children }: { children: ReactNode }) {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [items, setItems] = useState<CatalogItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [nonce, setNonce] = useState(0);
@@ -26,10 +27,10 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     let active = true;
     setLoading(true);
     api
-      .products()
-      .then(({ products: list }) => {
+      .catalog()
+      .then(({ items: list }) => {
         if (!active) return;
-        setProducts(list);
+        setItems(list);
         setError(null);
       })
       .catch((err: unknown) => {
@@ -43,11 +44,11 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   }, [nonce]);
 
   const reload = useCallback(() => setNonce((n) => n + 1), []);
-  const findProduct = useCallback((id: string) => findProductIn(products, id), [products]);
+  const findItem = useCallback((id: string) => findItemIn(items, id), [items]);
 
   const value = useMemo(
-    () => ({ products, loading, error, reload, findProduct }),
-    [products, loading, error, reload, findProduct],
+    () => ({ items, loading, error, reload, findItem }),
+    [items, loading, error, reload, findItem],
   );
   return <CatalogContext.Provider value={value}>{children}</CatalogContext.Provider>;
 }

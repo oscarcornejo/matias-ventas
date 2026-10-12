@@ -11,7 +11,9 @@ export interface SessionUser {
 }
 
 export interface CartItemInput {
-  productId: string;
+  id: string;
+  /** Un producto suelto o un combo: el servidor cobra distinto según cuál sea. */
+  kind: 'producto' | 'combo';
   quantity: number;
 }
 

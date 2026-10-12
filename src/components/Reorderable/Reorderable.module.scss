@@ -1,0 +1,92 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.fila {
+  @include card;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  // Arriba y no al centro: el asa y las flechas mueven la fila completa, así que
+  // van junto a su encabezado. Centradas quedaban flotando contra una fila alta.
+  align-items: start;
+  gap: $space-3;
+  padding: $space-3;
+  transition: border-color $duration-state $ease-out;
+
+  @include up($bp-md) {
+    padding: $space-4;
+    gap: $space-4;
+  }
+}
+
+.fila[data-arrastrando='true'] {
+  opacity: 0.45;
+}
+
+/// Marca dónde va a caer lo que se arrastra.
+.fila[data-encima='true'] {
+  border-color: $color-accent;
+  box-shadow: inset 0 2px 0 $color-accent;
+}
+
+.asa {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  color: $color-text-muted;
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.contenido {
+  min-width: 0;
+}
+
+/// En celular las dos flechas van en fila para no estirar la altura; desde
+/// tablet se apilan, que es como se leen mejor junto a una lista vertical.
+.flechas {
+  display: flex;
+  gap: $space-1;
+
+  @include up($bp-md) {
+    flex-direction: column;
+  }
+}
+
+.flecha {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid $color-border;
+  border-radius: $radius-field;
+  background: $color-surface;
+  color: $color-text;
+  cursor: pointer;
+
+  @include coarse-pointer {
+    width: $touch-target;
+    height: 2.25rem;
+  }
+
+  @include hover {
+    &:not(:disabled) {
+      background: $color-surface-sunken;
+    }
+  }
+
+  &:disabled {
+    color: $color-border-strong;
+    cursor: not-allowed;
+  }
+}
