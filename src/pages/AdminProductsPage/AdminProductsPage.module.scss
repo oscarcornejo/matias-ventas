@@ -188,6 +188,13 @@
   gap: $space-2;
   grid-column: 1 / -1;
 
+  // Un `display` de autor le gana al display:none que el navegador aplica a
+  // [hidden]. Sin esto, al editar se verían a la vez el formulario y los
+  // botones normales de la fila.
+  &[hidden] {
+    display: none;
+  }
+
   @include up($bp-md) {
     grid-column: auto;
     justify-content: flex-end;
@@ -237,4 +244,35 @@
   border-radius: $radius-card;
   background: $color-rejected-bg;
   color: $color-rejected-text;
+}
+
+// --- Edición dentro de la fila ---------------------------------------------
+
+/// Ocupa el ancho disponible de la fila: en celular toma las dos columnas,
+/// porque dos campos no caben al lado de la miniatura.
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  grid-column: 1 / -1;
+
+  @include up($bp-md) {
+    grid-column: 2 / -1;
+  }
+}
+
+.editFields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-3;
+}
+
+.editFields .field {
+  flex: 1 1 12rem;
+  max-width: none;
+}
+
+/// El precio es corto: no necesita el mismo ancho que el nombre.
+.fieldPrice {
+  flex: 0 1 9rem;
 }

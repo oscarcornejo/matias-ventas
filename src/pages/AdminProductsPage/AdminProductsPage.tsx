@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent, type RefObject } from 'react';
 import { api, ApiError } from '../../api/client';
 import { ImageError, prepareImage } from '../../lib/image';
 import { formatCLP } from '../../../shared/format';
@@ -169,8 +169,34 @@ function NewProduct({ onCreated }: { onCreated: () => Promise<void> }) {
 function ProductRow({ product, onChanged }: { product: AdminProduct; onChanged: () => Promise<void> }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editando, setEditando] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const nombreRef = useRef<HTMLInputElement>(null);
+  const editarRef = useRef<HTMLButtonElement>(null);
   const imagen = productImageUrl(product);
+
+  const [devolverFoco, setDevolverFoco] = useState(false);
+
+  // Al abrir la edición el foco entra al primer campo.
+  useEffect(() => {
+    if (editando) nombreRef.current?.focus();
+  }, [editando]);
+
+  // Al cerrarla vuelve al botón que la abrió, para no perder el lugar con teclado.
+  // Tiene que ser un efecto y no un callback: el botón está dentro de un bloque
+  // con `hidden` mientras se edita, y enfocar algo oculto no hace nada.
+  useEffect(() => {
+    if (!editando && devolverFoco) {
+      editarRef.current?.focus();
+      setDevolverFoco(false);
+    }
+  }, [editando, devolverFoco]);
+
+  function cerrarEdicion() {
+    setEditando(false);
+    setError(null);
+    setDevolverFoco(true);
+  }
 
   async function conAviso(accion: () => Promise<void>) {
     setBusy(true);
@@ -196,18 +222,49 @@ function ProductRow({ product, onChanged }: { product: AdminProduct; onChanged: 
         )}
       </span>
 
-      <div className={styles.rowInfo}>
-        <p className={styles.rowName}>{product.name}</p>
-        <p className={styles.rowPrice}>{formatCLP(product.price)}</p>
-      </div>
+      {editando ? (
+        <EditProduct
+          product={product}
+          nombreRef={nombreRef}
+          busy={busy}
+          onCancel={cerrarEdicion}
+          onSave={async (cambios) => {
+            await conAviso(() => api.updateProduct(product.id, cambios));
+            cerrarEdicion();
+          }}
+        />
+      ) : (
+        <div className={styles.rowInfo}>
+          <p className={styles.rowName}>{product.name}</p>
+          <p className={styles.rowPrice}>{formatCLP(product.price)}</p>
+        </div>
+      )}
 
-      <div className={styles.rowActions}>
-        {/* Acepta archivos desde cualquier dispositivo: no se fuerza la cámara. */}
+      <div className={styles.rowActions} hidden={editando}>
+        <button
+          ref={editarRef}
+          type="button"
+          className={styles.secondary}
+          disabled={busy}
+          onClick={() => setEditando(true)}
+        >
+          Editar
+          <span className="visually-hidden"> {product.name}</span>
+        </button>
+
+        {/*
+          Acepta archivos desde cualquier dispositivo: no se fuerza la cámara.
+          Queda fuera del árbol de accesibilidad porque el botón "Subir foto" es
+          el control real; si no, un lector de pantalla anunciaría dos controles
+          para la misma acción.
+        */}
         <input
           ref={fileRef}
           type="file"
           accept="image/*"
           className="visually-hidden"
+          tabIndex={-1}
+          aria-hidden="true"
           onChange={(e) => {
             const file = e.target.files?.[0];
             e.target.value = '';
@@ -257,5 +314,88 @@ function ProductRow({ product, onChanged }: { product: AdminProduct; onChanged: 
         </p>
       )}
     </li>
+  );
+}
+
+/** Edición de nombre y precio dentro de la misma fila: sin modal y sin cambiar de página. */
+function EditProduct({
+  product,
+  nombreRef,
+  busy,
+  onCancel,
+  onSave,
+}: {
+  product: AdminProduct;
+  nombreRef: RefObject<HTMLInputElement | null>;
+  busy: boolean;
+  onCancel: () => void;
+  onSave: (cambios: { name: string; price: number }) => Promise<void>;
+}) {
+  const [name, setName] = useState(product.name);
+  const [price, setPrice] = useState(String(product.price));
+  const [aviso, setAviso] = useState<string | null>(null);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const limpio = name.trim();
+    const valor = Number(price);
+
+    if (!limpio) {
+      setAviso('El nombre no puede quedar vacío.');
+      return;
+    }
+    if (!Number.isInteger(valor) || valor < 1) {
+      setAviso('El precio debe ser un número entero de pesos, mayor que cero.');
+      return;
+    }
+    setAviso(null);
+    await onSave({ name: limpio, price: valor });
+  }
+
+  return (
+    <form className={styles.editForm} onSubmit={handleSubmit} aria-label={`Editar ${product.name}`}>
+      <div className={styles.editFields}>
+        <div className={styles.field}>
+          <label htmlFor={`nombre-${product.id}`}>Nombre</label>
+          <input
+            id={`nombre-${product.id}`}
+            ref={nombreRef}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            maxLength={MAX_PRODUCT_NAME}
+          />
+        </div>
+
+        <div className={`${styles.field} ${styles.fieldPrice}`}>
+          <label htmlFor={`precio-${product.id}`}>Precio en pesos</label>
+          <input
+            id={`precio-${product.id}`}
+            type="number"
+            inputMode="numeric"
+            min={1}
+            step={1}
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            required
+          />
+        </div>
+      </div>
+
+      {aviso && (
+        <p className={styles.formError} role="alert">
+          {aviso}
+        </p>
+      )}
+
+      <div className={styles.formActions}>
+        <button type="submit" className={styles.primary} disabled={busy}>
+          {busy ? 'Guardando…' : 'Guardar'}
+        </button>
+        <button type="button" className={styles.secondary} onClick={onCancel} disabled={busy}>
+          Cancelar
+        </button>
+      </div>
+    </form>
   );
 }
