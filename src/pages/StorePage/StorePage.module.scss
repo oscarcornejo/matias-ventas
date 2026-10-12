@@ -93,6 +93,15 @@
   color: $color-text;
 }
 
+/// Una línea que explica qué es la sección. Solo donde hace falta: "Los productos"
+/// se explica solo, un combo no.
+.catalogLead {
+  @include prose;
+  margin-top: -$space-3;
+  color: $color-text-muted;
+  font-size: 0.9375rem;
+}
+
 .grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);

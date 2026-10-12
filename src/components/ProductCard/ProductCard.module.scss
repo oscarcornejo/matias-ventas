@@ -21,8 +21,12 @@
 }
 
 /// Hueco reservado para la fotografía del producto.
-/// Los tres comparten proporción y fondo exactos: comparar precios tiene que ser honesto.
+/// Todos comparten proporción y fondo exactos: comparar precios tiene que ser honesto.
+/// Las fotos se apilan aquí dentro y solo una se ve a la vez, así cambiar de foto
+/// al pasar el mouse no mueve ni un píxel del resto de la tarjeta.
 .media {
+  position: relative;
+  overflow: hidden;
   display: grid;
   place-items: center;
   // En la fila de celular el plano llena todo el alto; desde tablet toma la
@@ -56,9 +60,17 @@
 
 /// La foto real ocupa todo el hueco; el recorte lo decide el navegador.
 .photo {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  opacity: 0;
+  transition: opacity 260ms $ease-out;
+}
+
+.photo[data-activa='true'] {
+  opacity: 1;
 }
 
 .stand {
@@ -173,27 +185,6 @@
 }
 
 // --- Fotos al pasar el mouse ------------------------------------------------
-
-/// Las fotos se apilan en el mismo hueco y solo una se ve a la vez: así cambiar
-/// de foto no mueve ni un píxel del resto de la tarjeta.
-.media {
-  position: relative;
-  overflow: hidden;
-}
-
-.photo {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0;
-  transition: opacity 260ms $ease-out;
-}
-
-.photo[data-activa='true'] {
-  opacity: 1;
-}
 
 /// Indica cuántas fotos hay y en cuál va. Aparece solo con el mouse encima:
 /// en reposo la tarjeta no necesita este dato.

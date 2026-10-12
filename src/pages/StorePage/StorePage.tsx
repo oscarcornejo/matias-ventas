@@ -17,35 +17,56 @@ export function StorePage() {
   // La visita sin cuenta compra igual que un cliente: arma el carrito y se registra al pagar.
   const showCart = canUseCart(user?.role ?? null);
   const { items, loading, error, reload } = useCatalog();
+  const productos = items.filter((item) => item.kind === 'producto');
+  const combos = items.filter((item) => item.kind === 'combo');
 
   return (
     <div className={styles.page}>
       <Hero isAdmin={!showCart} />
 
-      <section aria-labelledby="productos-titulo" className={styles.catalog}>
-        <h2 id="productos-titulo" className={styles.catalogTitle}>
-          {items.length === 1 ? 'El producto' : 'Los productos'}
-        </h2>
+      {loading && <Loading label="Cargando los productos…" />}
 
-        {loading && <Loading label="Cargando los productos…" />}
+      {error && (
+        <div className={styles.error} role="alert">
+          <p>{error}</p>
+          <button type="button" className={styles.retry} onClick={reload}>
+            Reintentar
+          </button>
+        </div>
+      )}
 
-        {error && (
-          <div className={styles.error} role="alert">
-            <p>{error}</p>
-            <button type="button" className={styles.retry} onClick={reload}>
-              Reintentar
-            </button>
-          </div>
-        )}
+      {!loading && !error && items.length === 0 && (
+        <p className={styles.empty}>Todavía no hay productos a la venta. Vuelve a mirar más rato.</p>
+      )}
 
-        {!loading && !error && items.length === 0 && (
-          <p className={styles.empty}>
-            Todavía no hay productos a la venta. Vuelve a mirar más rato.
+      {/*
+        Productos y combos van en secciones separadas, con el orden que definió
+        Matías dentro de cada una. Las promociones van arriba: son la oferta, y
+        quien llega apurado debería verlas antes de elegir un producto suelto.
+
+        Como se leen sin haber visto el catálogo todavía, la sección lleva una línea
+        que explica qué es un combo.
+      */}
+      {!loading && !error && combos.length > 0 && (
+        <section aria-labelledby="combos-titulo" className={styles.catalog}>
+          <h2 id="combos-titulo" className={styles.catalogTitle}>
+            {combos.length === 1 ? 'La promoción' : 'Promociones'}
+          </h2>
+          <p className={styles.catalogLead}>
+            Varios productos juntos, más baratos que comprándolos por separado.
           </p>
-        )}
+          {showCart ? <ClientCatalog items={combos} /> : <ProductList items={combos} />}
+        </section>
+      )}
 
-        {!loading && !error && items.length > 0 && (showCart ? <ClientCatalog /> : <ProductList />)}
-      </section>
+      {!loading && !error && productos.length > 0 && (
+        <section aria-labelledby="productos-titulo" className={styles.catalog}>
+          <h2 id="productos-titulo" className={styles.catalogTitle}>
+            {productos.length === 1 ? 'El producto' : 'Los productos'}
+          </h2>
+          {showCart ? <ClientCatalog items={productos} /> : <ProductList items={productos} />}
+        </section>
+      )}
 
       {showCart && <MobileBar />}
     </div>
@@ -89,8 +110,7 @@ function Hero({ isAdmin }: { isAdmin: boolean }) {
   );
 }
 
-function ProductList({ onAdd }: { onAdd?: (item: CatalogItem) => void }) {
-  const { items } = useCatalog();
+function ProductList({ items, onAdd }: { items: CatalogItem[]; onAdd?: (item: CatalogItem) => void }) {
   const lines = useCartStore((state) => state.lines);
   return (
     <ul role="list" className={styles.grid}>
@@ -112,7 +132,7 @@ function ProductList({ onAdd }: { onAdd?: (item: CatalogItem) => void }) {
   );
 }
 
-function ClientCatalog() {
+function ClientCatalog({ items }: { items: CatalogItem[] }) {
   const add = useCartStore((state) => state.add);
   const [announcement, setAnnouncement] = useState('');
 
@@ -124,7 +144,7 @@ function ClientCatalog() {
 
   return (
     <>
-      <ProductList onAdd={handleAdd} />
+      <ProductList items={items} onAdd={handleAdd} />
       <p className="visually-hidden" role="status" aria-live="polite">
         {announcement}
       </p>
