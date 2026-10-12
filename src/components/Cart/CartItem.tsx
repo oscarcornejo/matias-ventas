@@ -1,22 +1,23 @@
-import { MAX_QUANTITY, useCartStore, type CartLine } from '../../store/cart';
-import { findProduct } from '../../../shared/products';
+import { MAX_QUANTITY, useCartStore } from '../../store/cart';
 import { formatCLP } from '../../../shared/format';
+import { productImageUrl } from '../../../shared/products';
+import { Icon } from '../Icon/Icon';
+import type { CartLineView } from '../../catalog/useCart';
 import styles from './Cart.module.scss';
 
-export function CartItem({ line }: { line: CartLine }) {
+export function CartItem({ line }: { line: CartLineView }) {
   const increment = useCartStore((state) => state.increment);
   const decrement = useCartStore((state) => state.decrement);
   const remove = useCartStore((state) => state.remove);
-  const product = findProduct(line.productId);
-  if (!product) return null;
-
-  const quantityId = `cantidad-${product.id}`;
+  const { product, quantity, subtotal } = line;
+  const imagen = productImageUrl(product);
 
   return (
     <li className={styles.item}>
-      <span className={styles.itemEmoji} aria-hidden="true">
-        {product.emoji}
+      <span className={styles.itemThumb} aria-hidden="true">
+        {imagen ? <img src={imagen} alt="" className={styles.itemImg} /> : product.emoji}
       </span>
+
       <div className={styles.itemInfo}>
         <p className={styles.itemName}>{product.name}</p>
         <p className={styles.itemUnit}>{formatCLP(product.price)} c/u</p>
@@ -26,38 +27,38 @@ export function CartItem({ line }: { line: CartLine }) {
         <button
           type="button"
           className={styles.stepButton}
-          onClick={() => decrement(line.productId)}
-          disabled={line.quantity <= 1}
+          onClick={() => decrement(product.id)}
+          disabled={quantity <= 1}
           aria-label={`Restar uno de ${product.name}`}
         >
-          −
+          <Icon name="menos" size={16} />
         </button>
-        <output id={quantityId} className={styles.quantity} aria-live="polite">
-          {line.quantity}
+        <output className={styles.quantity} aria-live="polite">
+          {quantity}
         </output>
         <button
           type="button"
           className={styles.stepButton}
-          onClick={() => increment(line.productId)}
-          disabled={line.quantity >= MAX_QUANTITY}
+          onClick={() => increment(product.id)}
+          disabled={quantity >= MAX_QUANTITY}
           aria-label={`Sumar uno de ${product.name}`}
         >
-          +
+          <Icon name="mas" size={16} />
         </button>
       </div>
 
       <p className={styles.itemSubtotal}>
         <span className="visually-hidden">Subtotal: </span>
-        {formatCLP(product.price * line.quantity)}
+        {formatCLP(subtotal)}
       </p>
 
       <button
         type="button"
         className={styles.remove}
-        onClick={() => remove(line.productId)}
+        onClick={() => remove(product.id)}
         aria-label={`Eliminar ${product.name} del carrito`}
       >
-        Eliminar
+        <Icon name="basurero" size={16} />
       </button>
     </li>
   );

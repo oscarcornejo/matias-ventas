@@ -17,46 +17,63 @@
 
 .refresh {
   @include button-secondary;
+  min-height: 2.5rem;
+  padding: 0 $space-4;
+  font-size: 0.875rem;
 }
 
+/// Resumen del administrador. No es el patrón de "métrica gigante": son tres datos
+/// reales de la base, al mismo peso, sin acento ni gráfico decorativo.
+/// Tres datos reales de la base, al mismo peso. Se envuelven en pantallas
+/// angostas en vez de colapsar sus columnas y recortar el texto.
 .stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: $space-3;
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-4 $space-7;
   margin: 0;
+  padding: $space-4 $space-5;
+  border: 1px solid $color-border;
+  border-radius: $radius-card;
+  background: $color-surface;
 
   > div {
-    @include card;
-    padding: $space-3 $space-4;
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+    min-width: max-content;
   }
 
   dt {
     color: $color-text-muted;
     font-size: 0.8125rem;
-    font-weight: 600;
   }
 
   dd {
+    @include numeric;
     margin: 0;
-    font-size: clamp(1.125rem, 1rem + 1vw, 1.5rem);
+    font-size: 1.375rem;
     font-weight: 800;
-    font-variant-numeric: tabular-nums;
+    letter-spacing: $tracking-tight;
   }
 }
 
 .empty {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: $space-3;
-  padding: $space-5;
-  border: 1px dashed $color-border;
-  border-radius: $radius-md;
+  padding: $space-8 $space-4;
+  border: 1px solid $color-border;
+  border-radius: $radius-card;
+  background: $color-surface;
   color: $color-text-muted;
+  text-align: center;
 }
 
 .cta {
   @include button-primary;
+  min-height: 3rem;
+  padding: 0 $space-5;
 }
 
 .error {
@@ -66,7 +83,7 @@
   justify-content: space-between;
   gap: $space-3;
   padding: $space-4;
-  border-radius: $radius-md;
+  border-radius: $radius-card;
   background: $color-rejected-bg;
   color: $color-rejected-text;
 }

@@ -1,0 +1,35 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: $space-5;
+  max-width: 44rem;
+  margin: 0 auto;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+}
+
+/// "Seguir comprando" es la salida, no la acción principal: va en secundario y
+/// con la flecha apuntando de vuelta a la tienda.
+.back {
+  @include button-secondary;
+  min-height: 2.5rem;
+  padding: 0 $space-4;
+  font-size: 0.875rem;
+
+  svg {
+    transform: rotate(180deg);
+  }
+
+  @include coarse-pointer {
+    min-height: $touch-target;
+  }
+}

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { screen } from '@testing-library/react';
 import { StorePage } from '../../src/pages/StorePage/StorePage';
+import { CartPage } from '../../src/pages/CartPage/CartPage';
 import { Header } from '../../src/components/Header/Header';
 import { useCartStore } from '../../src/store/cart';
 import { canPurchase } from '../../shared/permissions';
@@ -10,7 +11,7 @@ describe('regla: el administrador no puede comprar (interfaz)', () => {
   beforeEach(() => {
     // Incluso con productos en el carrito del navegador, el admin no debe verlo.
     useCartStore.getState().clear();
-    useCartStore.getState().add('chirlito-suffle');
+    useCartStore.getState().add('p-chirlito');
   });
 
   it('canPurchase solo permite al perfil cliente', () => {
@@ -39,13 +40,18 @@ describe('regla: el administrador no puede comprar (interfaz)', () => {
     renderWithSession(<Header />, adminUser);
     expect(screen.queryByRole('link', { name: /Ver carrito/ })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Compras' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Mati Ventas, ir al inicio' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Mati Ventas' })).toBeInTheDocument();
   });
 
-  it('el cliente sí ve carrito, "Agregar" y "Comprar"', () => {
+  it('el cliente sí ve "Agregar" en la tienda', () => {
     renderWithSession(<StorePage />, clientUser);
-    expect(screen.getByRole('region', { name: 'Tu carrito' })).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /Agregar/ })).toHaveLength(3);
+  });
+
+  it('el cliente sí puede abrir el carrito y comprar', () => {
+    useCartStore.getState().add('p-chirlito');
+    renderWithSession(<CartPage />, clientUser);
+    expect(screen.getByRole('heading', { name: 'Tu carrito' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Comprar' })).toBeInTheDocument();
   });
 });

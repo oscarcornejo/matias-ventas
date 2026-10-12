@@ -22,10 +22,34 @@ model User {
   id           String   @id @default(cuid())
   email        String   @unique
   role         Role     @default(CLIENTE)
-  /// Solo el administrador tiene contraseña; se guarda únicamente su hash bcrypt.
+  /// Hash bcrypt de la contraseña. La tienen el administrador y los clientes registrados.
   passwordHash String?
   createdAt    DateTime @default(now())
   orders       Order[]
+}
+
+/// Catálogo de la tienda. Es la fuente de verdad de los precios: el servidor
+/// los lee desde aquí al cobrar y nunca confía en lo que mande el navegador.
+model Product {
+  id    String @id @default(cuid())
+  name  String
+  /// Precio en pesos chilenos (CLP, entero). El peso no usa decimales.
+  price Int
+  /// Marcador visual mientras no haya fotografía.
+  emoji String @default("🍬")
+  /// La foto vive en la base, no en disco: el sistema de archivos de los
+  /// servicios gestionados se borra en cada despliegue. El navegador la
+  /// redimensiona antes de subirla, así que son archivos chicos.
+  imageData Bytes?
+  imageType String?
+  /// Oculto deja de aparecer en la tienda pero conserva el producto y su historial.
+  visible   Boolean  @default(true)
+  /// Orden de aparición en la tienda; a igualdad, por fecha de creación.
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([visible, position])
 }
 
 model Order {

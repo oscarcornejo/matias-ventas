@@ -1,0 +1,23 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-8 $space-4;
+  text-align: center;
+}
+
+.lead {
+  @include prose;
+  color: $color-text-muted;
+}
+
+.cta {
+  @include button-primary;
+  margin-top: $space-2;
+  min-height: 3rem;
+  padding: 0 $space-5;
+}

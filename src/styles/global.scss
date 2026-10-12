@@ -1,6 +1,22 @@
 @use 'variables' as *;
 @use 'mixins' as *;
 
+// Fuente auto-hospedada. Se declara a mano en vez de importar el index.css del
+// paquete porque ese trae cuatro subconjuntos (cirílico, vietnamita, latin-ext) que
+// esta tienda nunca usa: el navegador no los descarga, pero igual pesan en el deploy.
+// El subconjunto latino cubre todo el español, incluidos á é í ó ú ñ ü ¿ ¡.
+@font-face {
+  font-family: 'Plus Jakarta Sans Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url('@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-wght-normal.woff2')
+    format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+
 *,
 *::before,
 *::after {
@@ -10,6 +26,8 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-padding-top: calc(#{$header-height} + #{$space-4});
+  // Superficies del navegador: no se dejan en su valor por defecto.
+  scrollbar-color: $color-border-strong transparent;
 }
 
 body {
@@ -18,8 +36,14 @@ body {
   color: $color-text;
   font-family: $font-sans;
   font-size: 1rem;
-  line-height: 1.5;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: $color-accent-soft;
+  color: $color-text;
 }
 
 h1,
@@ -29,19 +53,53 @@ p {
   margin: 0;
 }
 
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
 h1 {
-  font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
-  line-height: 1.2;
-  letter-spacing: -0.01em;
+  font-size: clamp(1.75rem, 1.5rem + 1.1vw, 2.375rem);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: $tracking-tight;
 }
 
 h2 {
-  font-size: 1.25rem;
-  line-height: 1.3;
+  font-size: clamp(1.375rem, 1.2rem + 0.8vw, 1.75rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: $tracking-tight;
 }
 
-a {
+h3 {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: $tracking-tight;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/**
+ * Enlaces de texto, y SOLO esos.
+ *
+ * Un `a:hover` global tiene especificidad (0,1,1) y le gana a la clase de un
+ * módulo CSS (0,1,0): pisaba el color de cualquier <a> con forma de botón y lo
+ * dejaba con el texto del mismo color que su fondo, es decir, invisible.
+ * Los enlaces-botón siempre llevan clase; los de texto corrido nunca.
+ */
+a:not([class]) {
   color: $color-accent;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+
+  @include hover {
+    color: $color-accent-hover;
+  }
 }
 
 button,

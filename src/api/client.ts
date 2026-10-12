@@ -1,4 +1,5 @@
 import type { CartItemInput, OrderDTO, SessionUser } from '../../shared/types';
+import type { AdminProduct, Product } from '../../shared/products';
 
 export class ApiError extends Error {
   constructor(
@@ -31,10 +32,23 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return data as T;
 }
 
+export interface ProductInput {
+  name: string;
+  price: number;
+  emoji: string;
+  visible?: boolean;
+}
+
 export const api = {
   me: () => request<{ user: SessionUser }>('/auth/me'),
+  products: () => request<{ products: Product[] }>('/productos'),
   login: (email: string, password?: string) =>
     request<{ user: SessionUser }>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    }),
+  register: (email: string, password: string) =>
+    request<{ user: SessionUser }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
@@ -47,4 +61,21 @@ export const api = {
   myOrders: () => request<{ orders: OrderDTO[] }>('/orders/mine'),
   order: (id: string) => request<{ order: OrderDTO }>(`/orders/${encodeURIComponent(id)}`),
   adminOrders: () => request<{ orders: OrderDTO[] }>('/admin/orders'),
+
+  adminProducts: () => request<{ products: AdminProduct[] }>('/admin/productos'),
+  createProduct: (product: ProductInput) =>
+    request<{ id: string }>('/admin/productos', { method: 'POST', body: JSON.stringify(product) }),
+  updateProduct: (id: string, product: Partial<ProductInput>) =>
+    request<void>(`/admin/productos/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(product),
+    }),
+  /** La imagen ya viene redimensionada por el navegador (ver lib/image.ts). */
+  uploadProductImage: (id: string, type: string, data: string) =>
+    request<void>(`/admin/productos/${encodeURIComponent(id)}/imagen`, {
+      method: 'PUT',
+      body: JSON.stringify({ type, data }),
+    }),
+  deleteProductImage: (id: string) =>
+    request<void>(`/admin/productos/${encodeURIComponent(id)}/imagen`, { method: 'DELETE' }),
 };

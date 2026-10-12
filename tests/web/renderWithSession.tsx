@@ -1,24 +1,64 @@
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { SessionContext, type SessionContextValue } from '../../src/auth/SessionContext';
+import { CatalogContext, type CatalogContextValue } from '../../src/catalog/CatalogContext';
+import { findProductIn, type Product } from '../../shared/products';
 import type { SessionUser } from '../../shared/types';
 
 export const clientUser: SessionUser = { id: 'u-cliente', email: 'cliente@correo.cl', role: 'CLIENTE' };
 export const adminUser: SessionUser = { id: 'u-admin', email: 'matiasalecornejo@gmail.com', role: 'ADMIN' };
 
-export function renderWithSession(ui: ReactElement, user: SessionUser | null, initialPath = '/') {
-  const value: SessionContextValue = {
+/**
+ * Catálogo de prueba. El catálogo real lo administra Matías y vive en la base,
+ * así que las pruebas traen el suyo en vez de depender de productos fijos.
+ */
+export const CATALOGO_PRUEBA: Product[] = [
+  { id: 'p-chirlito', name: 'Chirlito Suffle', price: 300, emoji: '🍪', hasImage: false },
+  { id: 'p-grosso', name: 'Grosso Crunch', price: 200, emoji: '🍬', hasImage: false },
+  { id: 'p-alfajor', name: 'Alfajor Panchito', price: 400, emoji: '🍫', hasImage: false },
+];
+
+interface Options {
+  initialPath?: string;
+  products?: Product[];
+  catalogLoading?: boolean;
+  catalogError?: string | null;
+}
+
+export function renderWithSession(
+  ui: ReactElement,
+  user: SessionUser | null,
+  options: Options | string = {},
+) {
+  const { initialPath = '/', products = CATALOGO_PRUEBA, catalogLoading = false, catalogError = null } =
+    typeof options === 'string' ? { initialPath: options } : options;
+
+  const session: SessionContextValue = {
     user,
     loading: false,
     login: async () => {
       throw new Error('no implementado en tests');
     },
+    register: async () => {
+      throw new Error('no implementado en tests');
+    },
     logout: async () => undefined,
   };
+
+  const catalog: CatalogContextValue = {
+    products,
+    loading: catalogLoading,
+    error: catalogError,
+    reload: () => undefined,
+    findProduct: (id) => findProductIn(products, id),
+  };
+
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
-      <SessionContext.Provider value={value}>{ui}</SessionContext.Provider>
+      <SessionContext.Provider value={session}>
+        <CatalogContext.Provider value={catalog}>{ui as ReactNode}</CatalogContext.Provider>
+      </SessionContext.Provider>
     </MemoryRouter>,
   );
 }

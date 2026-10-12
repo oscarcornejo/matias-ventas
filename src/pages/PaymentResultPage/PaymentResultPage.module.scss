@@ -4,6 +4,11 @@
 .page {
   display: flex;
   justify-content: center;
+  padding-top: $space-5;
+
+  @include up($bp-md) {
+    padding-top: $space-7;
+  }
 }
 
 .card {
@@ -13,54 +18,55 @@
   align-items: center;
   gap: $space-3;
   width: 100%;
-  max-width: 32rem;
+  max-width: 34rem;
   padding: $space-6 $space-4;
-  border-top: 6px solid $color-border;
   text-align: center;
 
   @include up($bp-md) {
     padding: $space-7 $space-6;
   }
-
-  h1:focus {
-    outline: none;
-  }
-
-  h1:focus-visible {
-    @include focus-ring;
-  }
-}
-
-.aprobado {
-  border-top-color: $color-paid-text;
-}
-
-.pendiente {
-  border-top-color: #d97706;
-}
-
-.rechazado {
-  border-top-color: $color-rejected-text;
 }
 
 .icon {
-  font-size: 3.5rem;
-  line-height: 1;
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: $radius-pill;
+  background: $color-surface-sunken;
+  color: $color-text-muted;
+}
+
+// El color del estado solo vive en el icono: el resto de la tarjeta se mantiene neutro.
+.aprobado .icon {
+  background: $color-paid-bg;
+  color: $color-paid-text;
+}
+
+.pendiente .icon {
+  background: $color-pending-bg;
+  color: $color-pending-text;
+}
+
+.rechazado .icon {
+  background: $color-rejected-bg;
+  color: $color-rejected-text;
 }
 
 .text {
+  @include prose;
   color: $color-text-muted;
 }
 
 .details {
   display: flex;
   flex-direction: column;
-  gap: $space-2;
+  gap: $space-3;
   width: 100%;
   margin: $space-3 0 0;
   padding: $space-4;
-  border-radius: $radius-md;
-  background: $color-surface;
+  border-radius: $radius-field;
+  background: $color-surface-sunken;
   text-align: left;
 
   > div {
@@ -76,16 +82,12 @@
   }
 
   dd {
+    @include numeric;
     margin: 0;
     font-weight: 700;
-    font-variant-numeric: tabular-nums;
+    text-align: right;
     overflow-wrap: anywhere;
   }
-}
-
-.mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.8125rem;
 }
 
 .actions {
@@ -93,13 +95,40 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: $space-3;
-  margin-top: $space-4;
+  width: 100%;
+  margin-top: $space-3;
 }
 
 .primary {
   @include button-primary;
+  min-height: 3rem;
+  padding: 0 $space-5;
 }
 
 .secondary {
   @include button-secondary;
+  min-height: 3rem;
+  padding: 0 $space-5;
+}
+
+.note {
+  color: $color-text-muted;
+  font-size: 0.875rem;
+}
+
+.error {
+  width: 100%;
+  padding: $space-3;
+  border-radius: $radius-field;
+  background: $color-rejected-bg;
+  color: $color-rejected-text;
+  font-size: 0.9375rem;
+}
+
+/// Identificador de orden: dato que la persona copia y compara carácter a carácter.
+/// Monoespaciada por ser un identificador, no por decorar.
+.mono {
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  font-size: 0.8125rem;
+  letter-spacing: 0;
 }

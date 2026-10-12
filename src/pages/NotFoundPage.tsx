@@ -1,11 +1,18 @@
 import { Link } from 'react-router';
+import { Icon } from '../components/Icon/Icon';
+import styles from './NotFoundPage.module.scss';
 
 export function NotFoundPage() {
   return (
-    <section aria-labelledby="no-encontrada-titulo" style={{ textAlign: 'center', paddingBlock: '3rem' }}>
-      <h1 id="no-encontrada-titulo">Página no encontrada</h1>
-      <p style={{ marginBlock: '1rem' }}>La página que buscas no existe.</p>
-      <Link to="/">Volver a la tienda</Link>
+    <section aria-labelledby="no-encontrada-titulo" className={styles.page}>
+      <h1 id="no-encontrada-titulo">Esta página no existe</h1>
+      <p className={styles.lead}>
+        Puede que el enlace esté mal escrito o que la página ya no esté.
+      </p>
+      <Link to="/" className={styles.cta}>
+        Volver a la tienda
+        <Icon name="flecha" size={18} />
+      </Link>
     </section>
   );
 }

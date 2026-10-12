@@ -5,8 +5,8 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: saturate(180%) blur(12px);
+  background: rgba($color-bg, 0.88);
+  backdrop-filter: saturate(160%) blur(10px);
   border-bottom: 1px solid $color-border;
 }
 
@@ -14,17 +14,43 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: $space-2 $space-4;
+  gap: $space-2 $space-3;
   max-width: $content-max;
   min-height: $header-height;
   margin: 0 auto;
-  padding: $space-2 $space-4;
+  // En horizontal, un teléfono con notch recorta por los lados.
+  padding: $space-2 max(#{$space-4}, env(safe-area-inset-right)) $space-2
+    max(#{$space-4}, env(safe-area-inset-left));
 
   @include up($bp-md) {
-    padding-inline: $space-5;
+    flex-wrap: nowrap;
+    gap: $space-5;
+    padding: 0 $space-5;
   }
 }
 
+.brand {
+  flex-shrink: 0;
+  order: 0;
+  color: $color-text;
+  font-size: 1.0625rem;
+  font-weight: 800;
+  letter-spacing: $tracking-tight;
+  text-decoration: none;
+
+  @include hover {
+    color: $color-text;
+  }
+
+  @include coarse-pointer {
+    display: inline-flex;
+    align-items: center;
+    min-height: $touch-target;
+  }
+}
+
+/// Solo aparece con sesión iniciada, que es cuando hay más de una página a la que ir.
+/// En celular ocupa una segunda fila completa; desde tablet vuelve a la misma línea.
 .nav {
   display: flex;
   order: 2;
@@ -40,123 +66,175 @@
 .navLink {
   display: inline-flex;
   align-items: center;
-  min-height: $touch-target;
+  min-height: 2.25rem;
   padding: 0 $space-3;
   border-radius: $radius-pill;
   color: $color-text-muted;
+  font-size: 0.9375rem;
   font-weight: 600;
   text-decoration: none;
+  transition:
+    color $duration-state $ease-out,
+    background-color $duration-state $ease-out;
 
-  &:hover {
+  @include hover {
     color: $color-text;
-    background: $color-surface;
+    background: $color-surface-sunken;
+  }
+
+  @include coarse-pointer {
+    min-height: $touch-target;
   }
 }
 
 .active {
   color: $color-text;
-  background: $color-surface-strong;
-}
-
-// Todo lo que sigue va a la derecha; la marca queda siempre en la esquina superior derecha.
-.end {
-  display: flex;
-  order: 1;
-  flex: 1;
-  align-items: center;
-  justify-content: space-between;
-  gap: $space-3;
-
-  @include up($bp-md) {
-    flex: 0 1 auto;
-    margin-left: auto;
-  }
+  background: $color-surface-sunken;
 }
 
 .account {
   display: flex;
+  order: 1;
   align-items: center;
   gap: $space-2;
+  margin-left: auto;
+  min-width: 0;
+
+  @include up($bp-md) {
+    order: 0;
+  }
+}
+
+.cartLink {
+  @include pill;
+  gap: $space-1;
+  min-height: $touch-target;
+  padding: 0 $space-3;
+  color: $color-text;
+  text-decoration: none;
+  transition: background-color $duration-state $ease-out;
+
+  @include hover {
+    background: $color-surface-sunken;
+    color: $color-text;
+  }
+}
+
+.badge {
+  @include numeric;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.375rem;
+  height: 1.375rem;
+  padding: 0 $space-1;
+  border-radius: $radius-pill;
+  background: $color-surface-sunken;
+  color: $color-text-muted;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  transition:
+    background-color $duration-state $ease-out,
+    color $duration-state $ease-out;
+}
+
+// Único momento de autoría del sistema: el acuse al agregar un producto.
+.badge[data-filled='true'] {
+  background: $color-accent;
+  color: $color-on-accent;
+  animation: acuse 420ms $ease-out;
+}
+
+@keyframes acuse {
+  0% {
+    transform: scale(1);
+  }
+  38% {
+    transform: scale(1.28);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .email {
   display: none;
-  max-width: 14rem;
-  overflow: hidden;
+  align-items: center;
+  gap: $space-2;
+  min-width: 0;
   color: $color-text-muted;
   font-size: 0.875rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 
   @include up($bp-lg) {
     display: inline-flex;
-    align-items: center;
-    gap: $space-2;
   }
 }
 
+.emailText {
+  max-width: 13rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .roleTag {
-  padding: 0.125rem $space-2;
-  border-radius: $radius-pill;
+  @include pill;
+  flex-shrink: 0;
+  height: 1.375rem;
+  padding: 0 $space-2;
   background: $color-accent-soft;
   color: $color-accent-hover;
   font-size: 0.75rem;
   font-weight: 700;
 }
 
-.cartLink {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: $touch-target;
-  height: $touch-target;
-  border-radius: 50%;
-  font-size: 1.25rem;
-  text-decoration: none;
+.ghost {
+  @include button-secondary;
+  flex-shrink: 0;
+  min-height: 2.5rem;
+  padding: 0 $space-3;
+  font-size: 0.875rem;
 
-  &:hover {
-    background: $color-surface;
+  // En celular el icono habla solo; el texto vuelve cuando hay espacio.
+  @include up($bp-md) {
+    padding: 0 $space-4;
+  }
+
+  @include coarse-pointer {
+    min-height: $touch-target;
   }
 }
 
-.badge {
-  position: absolute;
-  top: 0;
-  right: -2px;
-  min-width: 1.25rem;
-  height: 1.25rem;
-  padding: 0 0.3rem;
-  border-radius: $radius-pill;
-  background: $color-accent;
-  color: $color-on-accent;
-  font-size: 0.75rem;
-  font-weight: 700;
-  line-height: 1.25rem;
-  text-align: center;
+/// En celular el icono habla a la vista y el texto queda solo para lectores de
+/// pantalla: se oculta visualmente, nunca con display:none, para que el enlace
+/// conserve su nombre accesible en todos los tamaños.
+.ghostText {
+  @include visually-hidden;
+
+  @include up($bp-md) {
+    position: static !important;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
 }
 
-.logout {
-  @include button-secondary;
-  min-height: 2.25rem;
+.signup {
+  @include button-primary;
+  flex-shrink: 0;
+  min-height: 2.5rem;
   padding: 0 $space-3;
   font-size: 0.875rem;
-}
-
-.brand {
-  margin-left: auto;
-  color: $color-text;
-  font-size: 1.125rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  text-decoration: none;
   white-space: nowrap;
 
   @include up($bp-md) {
-    font-size: 1.375rem;
+    padding: 0 $space-4;
   }
 
-  &:hover {
-    color: $color-accent;
+  @include coarse-pointer {
+    min-height: $touch-target;
   }
 }

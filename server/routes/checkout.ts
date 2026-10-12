@@ -15,7 +15,7 @@ checkoutRouter.post('/', requireAuth, forbidAdmin, async (req, res) => {
 
   let priced;
   try {
-    priced = priceCart(parsed.data.items);
+    priced = await priceCart(parsed.data.items);
   } catch (error) {
     if (error instanceof PricingError) {
       res.status(400).json({ error: error.message });

@@ -16,10 +16,13 @@ Tienda web de dulces con pago mediante **Mercado Pago Checkout Pro en pesos chil
 
 | Perfil            | Acceso                                                | Puede                                                                  |
 | ----------------- | ----------------------------------------------------- | ---------------------------------------------------------------------- |
+| **Visita sin cuenta** | No necesita entrar                                | Ver los productos con sus precios y armar el carrito. Para pagar se le pide crear una cuenta, y el carrito se mantiene. |
+| **Cliente**       | Correo + contraseña, creada en `/registro`            | Ver productos, usar el carrito, comprar y ver sus propias compras.      |
 | **Administrador** | `matiasalecornejo@gmail.com` + contraseña (`ADMIN_PASSWORD`) | Ver productos y todas las compras con su estado de pago. **No puede comprar** (la UI lo oculta y la API responde `403`). |
-| **Cliente**       | Solo correo electrónico (la cuenta se crea al entrar) | Ver productos, usar el carrito, comprar y ver sus propias compras.      |
 
-La sesión es una cookie `httpOnly` firmada (JWT HS256). La contraseña del administrador nunca se guarda en texto plano: al arrancar el servidor (o con `npm run db:seed`) se guarda solo su hash bcrypt.
+La tienda es **pública**: el catálogo (`GET /api/products`) y la página principal se ven sin sesión. Comprar sí exige una cuenta.
+
+La sesión es una cookie `httpOnly` firmada (JWT HS256). Ninguna contraseña se guarda en texto plano: tanto la del administrador como las de los clientes quedan solo como hash bcrypt (costo 12). El registro no acepta el correo del administrador, y el perfil se deriva siempre del correo, no de lo que diga la fila en la base.
 
 ---
 

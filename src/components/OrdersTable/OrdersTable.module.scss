@@ -2,91 +2,108 @@
 @use '../../styles/mixins' as *;
 
 .wrapper {
-  @include up($bp-md) {
-    @include card;
-    overflow-x: auto;
-  }
+  @include card;
+  overflow: hidden;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9375rem;
-
-  th,
-  td {
-    padding: $space-3 $space-4;
-    text-align: left;
-    vertical-align: middle;
-  }
-
-  thead th {
-    background: $color-surface;
-    color: $color-text-muted;
-    font-size: 0.8125rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-
-  tbody tr + tr td {
-    border-top: 1px solid $color-border;
-  }
-
-  // Celular: cada orden es una tarjeta con etiquetas por campo.
-  @media (max-width: calc(#{$bp-md} - 1px)) {
-    thead {
-      @include visually-hidden;
-    }
-
-    tbody {
-      display: flex;
-      flex-direction: column;
-      gap: $space-3;
-    }
-
-    tr {
-      @include card;
-      display: block;
-      padding: $space-2 0;
-    }
-
-    tbody tr + tr td {
-      border-top: 0;
-    }
-
-    td {
-      display: flex;
-      justify-content: space-between;
-      gap: $space-4;
-      padding: $space-2 $space-4;
-      text-align: right;
-
-      &::before {
-        content: attr(data-label);
-        flex-shrink: 0;
-        color: $color-text-muted;
-        font-size: 0.8125rem;
-        font-weight: 600;
-        text-align: left;
-      }
-    }
-  }
+  text-align: left;
 }
 
 .numeric {
-  font-variant-numeric: tabular-nums;
-
-  @include up($bp-md) {
-    text-align: right !important;
-  }
+  @include numeric;
+  text-align: right;
 }
 
 .total {
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .customer {
   overflow-wrap: anywhere;
+}
+
+// --- Celular: cada fila es una tarjeta -------------------------------------
+// Por debajo de $bp-md la tabla se reconstruye con bloques y los roles ARIA
+// explícitos del marcado conservan la semántica (ver OrdersTable.tsx).
+
+/// La cabecera se oculta a la vista, pero NO con display:none: así sigue en el
+/// árbol de accesibilidad y cada celda conserva su encabezado de columna.
+.head {
+  @include visually-hidden;
+
+  @include up($bp-md) {
+    position: static !important;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+}
+
+.table tr {
+  display: block;
+  padding: $space-4;
+  border-bottom: 1px solid $color-border;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  @include up($bp-md) {
+    display: table-row;
+    padding: 0;
+  }
+}
+
+.table td {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: $space-4;
+  padding: $space-1 0;
+
+  &::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    color: $color-text-muted;
+    font-size: 0.8125rem;
+  }
+
+  @include up($bp-md) {
+    display: table-cell;
+    padding: $space-3 $space-4;
+    border-bottom: 1px solid $color-border;
+    vertical-align: middle;
+
+    &::before {
+      content: none;
+    }
+  }
+}
+
+.table tbody tr:last-child td {
+  @include up($bp-md) {
+    border-bottom: 0;
+  }
+}
+
+.table th {
+  padding: $space-3 $space-4;
+  background: $color-surface-sunken;
+  border-bottom: 1px solid $color-border;
+  color: $color-text-muted;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+// En celular el valor va alineado a la derecha frente a su etiqueta.
+.table td.numeric {
+  text-align: right;
 }

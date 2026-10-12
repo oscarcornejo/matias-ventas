@@ -11,6 +11,25 @@
   outline-offset: 2px;
 }
 
+/// Estado hover solo donde el puntero puede flotar de verdad. En una pantalla
+/// táctil el :hover se queda pegado después del toque hasta que tocas otra cosa.
+@mixin hover {
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      @content;
+    }
+  }
+}
+
+/// Para controles pequeños que con dedo necesitan más área que con mouse.
+/// Se decide por método de entrada, no por ancho de pantalla: un notebook con
+/// pantalla táctil también merece el área grande.
+@mixin coarse-pointer {
+  @media (pointer: coarse) {
+    @content;
+  }
+}
+
 @mixin visually-hidden {
   position: absolute !important;
   width: 1px;
@@ -23,6 +42,27 @@
   border: 0;
 }
 
+/// Cifras que se alinean en columna y no bailan al cambiar la cantidad.
+@mixin numeric {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/// Elevación en reposo: hairline, sin sombra. Nunca las dos a la vez.
+@mixin card {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-card;
+}
+
+/// Elevación real: sombra con offset y difuminado, y el borde se retira.
+@mixin raised {
+  background: $color-surface;
+  border: 1px solid transparent;
+  border-radius: $radius-card;
+  box-shadow: $shadow-raised;
+}
+
 @mixin button-base {
   display: inline-flex;
   align-items: center;
@@ -31,22 +71,22 @@
   min-height: $touch-target;
   padding: 0 $space-4;
   border: 1px solid transparent;
-  border-radius: $radius-pill;
+  border-radius: $radius-field;
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1;
+  letter-spacing: 0;
   cursor: pointer;
   text-decoration: none;
   transition:
-    background-color 150ms ease,
-    border-color 150ms ease,
-    color 150ms ease,
-    transform 150ms ease;
+    background-color $duration-state $ease-out,
+    border-color $duration-state $ease-out,
+    color $duration-state $ease-out;
 
   &:disabled,
   &[aria-disabled='true'] {
     cursor: not-allowed;
-    opacity: 0.55;
+    opacity: 0.5;
   }
 }
 
@@ -55,30 +95,69 @@
   background: $color-accent;
   color: $color-on-accent;
 
-  &:hover:not(:disabled) {
-    background: $color-accent-hover;
-  }
-
-  &:active:not(:disabled) {
-    transform: translateY(1px);
+  @include hover {
+    &:not(:disabled) {
+      background: $color-accent-hover;
+    }
   }
 }
 
 @mixin button-secondary {
   @include button-base;
-  background: $color-bg;
+  background: $color-surface;
   color: $color-text;
-  border-color: $color-border;
+  border-color: $color-border-strong;
 
-  &:hover:not(:disabled) {
-    border-color: $color-text-muted;
-    background: $color-surface;
+  @include hover {
+    &:not(:disabled) {
+      background: $color-surface-sunken;
+      border-color: $color-text;
+    }
   }
 }
 
-@mixin card {
-  background: $color-bg;
-  border: 1px solid $color-border;
-  border-radius: $radius-lg;
-  box-shadow: $shadow-card;
+/// Control pequeño en forma de pastilla: chips, pasos del contador, badges.
+@mixin pill {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+  border-radius: $radius-pill;
+  line-height: 1;
+}
+
+@mixin field {
+  width: 100%;
+  min-height: $touch-target;
+  padding: 0 $space-3;
+  border: 1px solid $color-border-strong;
+  border-radius: $radius-field;
+  background: $color-surface;
+  color: $color-text;
+  caret-color: $color-accent;
+  transition:
+    border-color $duration-state $ease-out,
+    background-color $duration-state $ease-out;
+
+  &::placeholder {
+    color: $color-text-muted;
+  }
+
+  @include hover {
+    border-color: $color-text;
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+    outline-offset: 0;
+    border-color: $color-accent;
+  }
+
+  &[aria-invalid='true'] {
+    border-color: $color-error;
+  }
+}
+
+/// Medida de lectura: ningún párrafo pasa de ~68 caracteres.
+@mixin prose {
+  max-width: $measure;
 }

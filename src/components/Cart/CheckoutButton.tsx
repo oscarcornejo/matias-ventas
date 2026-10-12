@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { api } from '../../api/client';
+import { useSession } from '../../auth/SessionContext';
 import { useCartStore } from '../../store/cart';
 import styles from './Cart.module.scss';
 
@@ -10,10 +12,17 @@ export const redirectTo = {
 
 export function CheckoutButton() {
   const lines = useCartStore((state) => state.lines);
+  const { user } = useSession();
+  const navigate = useNavigate();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleCheckout() {
+    // Sin cuenta no se puede pagar: se manda a registrarse y se vuelve al carrito con todo intacto.
+    if (!user) {
+      navigate('/registro', { state: { from: '/#carrito' } });
+      return;
+    }
     setPending(true);
     setError(null);
     try {
@@ -39,6 +48,11 @@ export function CheckoutButton() {
       >
         {pending ? 'Redirigiendo a Mercado Pago…' : 'Comprar'}
       </button>
+      {!user && (
+        <p className={styles.needsAccount}>
+          Te pediremos crear una cuenta antes de pagar. Tu carrito se mantiene.
+        </p>
+      )}
       {error && (
         <p id="checkout-error" className={styles.error} role="alert">
           {error}

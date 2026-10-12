@@ -4,49 +4,45 @@ Actualizado: 2026-10-12. Versión en línea (puede tener cambios posteriores): h
 
 ## Estado actual
 
-El código de la tienda está completo, pasan los 43 tests, el chequeo de tipos y el build de producción, pero **nunca se ha probado con una base PostgreSQL real ni con un pago real de Mercado Pago**. Esos son los próximos pasos.
+El código de la tienda está completo, pasan los 64 tests, el chequeo de tipos y el build de producción. La base PostgreSQL real **ya quedó probada** en el equipo original: la migración inicial aplicó sin drift, el administrador se creó con su hash bcrypt y el login, los permisos y el rechazo del webhook sin firma se verificaron en vivo contra la base. Lo único que falta es **un pago real en el sandbox de Mercado Pago**, que necesita credenciales de prueba.
 
 Mati Ventas es una tienda web de dulces en español de Chile: React + Vite en el frontend, una API Express con Prisma y PostgreSQL, y pagos con Mercado Pago Checkout Pro en pesos chilenos (CLP).
 
 | Área | Estado | Cómo se verificó |
 | --- | --- | --- |
-| Login de cliente (solo correo) y de admin (correo + contraseña) | Hecho | Tests de servidor y revisión manual del código |
-| Regla "el administrador no puede comprar" | Hecho | Tests de UI y de API (403). Se probó quitando el bloqueo: los tests fallaron, así que sí lo detectan |
+| Catálogo público (sin cuenta) | Hecho | `GET /api/products` responde 200 sin cookie; test de servidor y de UI |
+| Registro de cliente (correo + contraseña) | Hecho | Tests de servidor y prueba en vivo: 201 con sesión iniciada, 409 si el correo ya existe, 409 con el correo del admin, 400 si la clave tiene menos de 8 caracteres |
+| Login de cliente y de admin (ambos con contraseña) | Hecho | Tests de servidor y prueba en vivo: clave correcta 200, clave mala 401, sin clave 400, correo inexistente 401 sin crear la cuenta |
+| Regla "el administrador no puede comprar" | Hecho | Tests de UI y de API (403), más prueba en vivo: `POST /api/checkout` como admin responde 403. Se probó quitando el bloqueo: los tests fallaron, así que sí lo detectan |
 | Carrito con Zustand persistido | Hecho | Tests de store y de componente, incluido el uso con teclado |
+| Comprar sin cuenta manda al registro y conserva el carrito | Hecho | Test de UI: "Comprar" navega a `/registro`, no llama al checkout y el carrito queda intacto |
 | Checkout con precios calculados en el servidor | Hecho | Tests con Mercado Pago simulado |
 | Webhook con validación de firma | Hecho | Tests con firmas válidas e inválidas; el servidor compilado responde 401 sin firma |
-| Páginas de retorno (aprobado, pendiente, rechazado) | Hecho | Solo revisión de código |
-| Base de datos PostgreSQL | Esquema y migración inicial listos | **Sin probar contra una base real** |
-| Pago real en el sandbox de Mercado Pago | Pendiente | Faltan credenciales de prueba |
-| Repositorio remoto (GitHub) | Pendiente | Hay `git init`, pero ningún commit |
+| Páginas de retorno (aprobado, pendiente, rechazado) | Hecho | Solo revisión de código; faltan de probar con un pago real |
+| Base de datos PostgreSQL | Probado | `npm run db:migrate` creó la base y las tablas sin pedir otra migración; `prisma migrate status` dice "up to date"; `db:seed` dejó el admin con hash bcrypt |
+| Pago real en el sandbox de Mercado Pago | Pendiente | Faltan credenciales de prueba. Sin token válido, `POST /api/checkout` responde 502 y borra la orden: verificado, no deja órdenes huérfanas |
+| Repositorio remoto (GitHub) | Hecho | Repositorio privado `oscarcornejo/matias-ventas`; la rama `main` está al día con `origin` |
 
 Productos y precios fijos (en `shared/products.ts`): Chirlito Suffle $300, Grosso Crunch $200 y Alfajor Panchito $400. El único administrador es `matiasalecornejo@gmail.com`.
 
 ## Llevar el código a otra computadora
 
-Hay que subir el código a un repositorio privado de GitHub y clonarlo en el otro equipo. El archivo `.env` (con secretos) **nunca** se sube; se vuelve a crear a mano en cada equipo.
-
-**En el computador original** (una sola vez):
-
-1. Crea un repositorio **privado** vacío en https://github.com/new (por ejemplo `mati-ventas`), sin README ni .gitignore.
-2. Confirma que `.env` no se va a subir. `git status` no debe mostrar `.env`; ya está en `.gitignore`.
-3. Haz el primer commit y súbelo:
-
-```bash
-cd ~/Documents/apps_matias
-git add .
-git status            # revisa: no debe aparecer .env, node_modules, dist ni dist-server
-git commit -m "Mati Ventas: versión inicial"
-git branch -M main
-git remote add origin https://github.com/TU_USUARIO/mati-ventas.git
-git push -u origin main
-```
+El código ya está en el repositorio privado `oscarcornejo/matias-ventas`, así que este paso está hecho: basta clonarlo en el otro equipo. El archivo `.env` (con secretos) **nunca** se sube; se vuelve a crear a mano en cada equipo.
 
 **En la otra computadora:**
 
 ```bash
-git clone https://github.com/TU_USUARIO/mati-ventas.git
-cd mati-ventas
+git clone https://github.com/oscarcornejo/matias-ventas.git
+cd matias-ventas
+```
+
+Para subir cambios nuevos desde el equipo original, revisa antes que `.env` no aparezca:
+
+```bash
+git status            # no debe aparecer .env, node_modules, dist ni dist-server
+git add .
+git commit -m "Describe el cambio"
+git push
 ```
 
 Luego sigue la sección "Levantar el proyecto en local". Los valores secretos de `.env` (contraseña del admin, credenciales de Mercado Pago) pásalos por un gestor de contraseñas, nunca por el repositorio ni por chat. `SESSION_SECRET` puede ser distinto en cada equipo: solo obliga a volver a iniciar sesión.
@@ -66,7 +62,7 @@ Se necesitan Node 22 y un PostgreSQL; con eso, cuatro comandos dejan la tienda c
 
 ### 1. Instalar Node 22
 
-El proyecto exige **Node 20.19 o superior** (recomendado 22 LTS; está fijado en `.nvmrc`). El computador original tiene Node 14.15.1, que no sirve.
+El proyecto exige **Node 20.19 o superior** (`.nvmrc` fija 22 LTS). El computador original ya tiene **Node 24.15.0**, que cumple; este paso solo aplica al equipo nuevo.
 
 - **Opción simple:** descarga el instalador `.pkg` de **Node 22 LTS** desde https://nodejs.org e instálalo. Cierra y abre la terminal y comprueba con `node -v`, que debe decir `v22.x`. Este instalador reemplaza el Node que tengas.
 - **Si otros proyectos dependen de otra versión de Node**, usa nvm:
@@ -79,7 +75,7 @@ cd <carpeta-del-proyecto> && nvm install && nvm use
 
 En Windows: instalador `.msi` de nodejs.org, o nvm-windows.
 
-En el computador original, `brew install node@22` falla porque las Command Line Tools de Xcode están desactualizadas para macOS 15. Se arregla desde Ajustes del Sistema → Actualización de software, o con `sudo rm -rf /Library/Developer/CommandLineTools && sudo xcode-select --install`.
+Si `brew install node@22` falla porque las Command Line Tools de Xcode están desactualizadas, se arregla desde Ajustes del Sistema → Actualización de software, o con `sudo rm -rf /Library/Developer/CommandLineTools && sudo xcode-select --install`.
 
 ### 2. Tener un PostgreSQL
 
@@ -87,11 +83,12 @@ Elige una opción:
 
 | Opción | Pasos | `DATABASE_URL` |
 | --- | --- | --- |
-| **Postgres.app** (local, Mac) | Descárgala de https://postgresapp.com, ábrela y presiona **Initialize** | `postgresql://TU_USUARIO_DEL_MAC@localhost:5432/mati_ventas?schema=public` (sin contraseña; en el equipo original el usuario es `oscar`) |
+| **Homebrew** (lo que usa el equipo original) | `brew install postgresql@17 && brew services start postgresql@17` | `postgresql://TU_USUARIO_DEL_MAC@localhost:5432/mati_ventas?schema=public` (sin contraseña; en el equipo original el usuario es `oscarcornejo`) |
+| **Postgres.app** (local, Mac) | Descárgala de https://postgresapp.com, ábrela y presiona **Initialize** | Igual que la opción anterior |
 | **Neon** (nube, gratis) | Crea un proyecto en https://neon.tech | La *connection string* que entrega Neon |
 | **Docker** | `npm run db:up` (usa `docker-compose.yml`) | `postgresql://mati:mati@localhost:5432/mati_ventas?schema=public` |
 
-No hace falta crear la base a mano: `npm run db:migrate` la crea si no existe. El equipo original no tiene Docker instalado.
+No hace falta crear la base a mano: `npm run db:migrate` la crea si no existe (ya comprobado). El equipo original corre PostgreSQL 17 por Homebrew en el puerto 5432, y también tiene Docker y `cloudflared` instalados.
 
 ### 3. Configurar `.env`
 
@@ -103,7 +100,7 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"  
 Abre `.env` y completa:
 
 ```bash
-DATABASE_URL="postgresql://oscar@localhost:5432/mati_ventas?schema=public"
+DATABASE_URL="postgresql://oscarcornejo@localhost:5432/mati_ventas?schema=public"
 SESSION_SECRET="<lo que imprimió el comando anterior>"
 ADMIN_PASSWORD="<una contraseña de al menos 8 caracteres>"
 MP_ACCESS_TOKEN="pendiente"
@@ -111,7 +108,9 @@ MP_WEBHOOK_SECRET="pendiente"
 APP_URL="http://localhost:5173"
 ```
 
-Los valores `pendiente` sirven para levantar la app y navegar sin credenciales de Mercado Pago; lo único que no funciona es "Comprar". El servidor valida el `.env` al arrancar y, si falta algo, muestra qué variable corregir.
+Los valores `pendiente` sirven para levantar la app y navegar sin credenciales de Mercado Pago; lo único que no funciona es "Comprar" (responde 502 y borra la orden). El servidor valida el `.env` al arrancar y, si falta algo, muestra qué variable corregir.
+
+En el equipo original el `.env` ya está creado y la base `mati_ventas` ya tiene sus tablas y el administrador. Si cambias `ADMIN_PASSWORD`, vuelve a correr `npm run db:seed` para actualizar el hash.
 
 ### 4. Instalar, crear las tablas y arrancar
 
@@ -124,8 +123,9 @@ npm run dev            # web en :5173 y API en :3000
 
 Abre **http://localhost:5173** y prueba:
 
-- **Como cliente:** entra con cualquier correo, sin contraseña.
-- **Como administrador:** entra con `matiasalecornejo@gmail.com` y la contraseña de `ADMIN_PASSWORD`.
+- **Sin cuenta:** la tienda se ve directo; agrega productos al carrito y presiona **Comprar** para que te pida registrarte.
+- **Como cliente:** crea una cuenta en **Crear cuenta** (`/registro`) con un correo y una contraseña de 8 caracteres o más.
+- **Como administrador:** entra en `/acceso` con `matiasalecornejo@gmail.com` y la contraseña de `ADMIN_PASSWORD`.
 
 Para detener la app presiona `Ctrl + C`. Siempre abre la app por el puerto 5173 (o por la URL del túnel): Vite reenvía `/api` a Express, y así la cookie de sesión funciona.
 
@@ -134,7 +134,7 @@ Para detener la app presiona `Ctrl + C`. Siempre abre la app por el puerto 5173 
 | Comando | Qué hace |
 | --- | --- |
 | `npm run dev` | Frontend (Vite) + API (tsx watch) en paralelo |
-| `npm test` | Los 43 tests (web y servidor) |
+| `npm test` | Los 64 tests (web y servidor) |
 | `npm run typecheck` | Tipos del frontend y del servidor |
 | `npm run build` | Compila a `dist/` y `dist-server/` |
 | `npm start` | Producción: Express sirve la app y la API |
@@ -213,33 +213,35 @@ El navegador nunca envía precios. La orden pasa a PAGADA solo cuando llega un w
 
 ### Recorrido de una compra
 
-1. El cliente presiona **Comprar**. `POST /api/checkout` recibe solo `{productId, quantity}`.
-2. El servidor rechaza al admin (403), calcula los precios desde `shared/products.ts` y crea la `Order` en estado PENDIENTE con sus `OrderItem`.
-3. Crea la preferencia (`currency_id: CLP`, `external_reference` = id de la orden, `back_urls`, `notification_url`) y responde con el `init_point`.
-4. El navegador redirige al checkout de Mercado Pago. Al terminar, Mercado Pago lo devuelve a `/pago/aprobado`, `/pago/pendiente` o `/pago/rechazado` con `?orden=<id>`.
-5. Mercado Pago llama a `POST /api/webhooks/mercadopago`. El servidor valida `x-signature` (HMAC-SHA256), consulta el pago y actualiza la orden a PAGADA o RECHAZADA. Una orden PAGADA no vuelve atrás.
-6. La página de retorno lee el estado real desde la API y lo consulta varias veces mientras siga pendiente.
+1. Cualquiera puede ver el catálogo y armar el carrito sin cuenta. Al presionar **Comprar** sin sesión, la app lleva a `/registro` y vuelve al carrito con los productos intactos (el carrito vive en el navegador).
+2. El cliente con sesión presiona **Comprar**. `POST /api/checkout` recibe solo `{productId, quantity}`.
+3. El servidor rechaza al admin (403), calcula los precios desde `shared/products.ts` y crea la `Order` en estado PENDIENTE con sus `OrderItem`.
+4. Crea la preferencia (`currency_id: CLP`, `external_reference` = id de la orden, `back_urls`, `notification_url`) y responde con el `init_point`.
+5. El navegador redirige al checkout de Mercado Pago. Al terminar, Mercado Pago lo devuelve a `/pago/aprobado`, `/pago/pendiente` o `/pago/rechazado` con `?orden=<id>`.
+6. Mercado Pago llama a `POST /api/webhooks/mercadopago`. El servidor valida `x-signature` (HMAC-SHA256), consulta el pago y actualiza la orden a PAGADA o RECHAZADA. Una orden PAGADA no vuelve atrás.
+7. La página de retorno lee el estado real desde la API y lo consulta varias veces mientras siga pendiente.
 
 ### Carpetas
 
 | Carpeta | Contenido |
 | --- | --- |
-| `shared/` | Catálogo y precios, permisos (`ADMIN_EMAIL`, `canPurchase`), tipos y formato CLP. Lo usan el frontend y el servidor |
-| `server/` | `app.ts` (crea la app), `index.ts` (arranque y admin), `env.ts`, `db.ts`, `lib/` (session, pricing, mercadopago, orders, admin), `middleware/auth.ts`, `routes/` |
+| `shared/` | Catálogo y precios, permisos (`ADMIN_EMAIL`, `canPurchase`, `canUseCart`), tipos y formato CLP. Lo usan el frontend y el servidor |
+| `server/` | `app.ts` (crea la app), `index.ts` (arranque y admin), `env.ts`, `db.ts`, `lib/` (session, passwords, pricing, mercadopago, orders, admin), `middleware/auth.ts`, `routes/` |
 | `src/` | App React: `pages/`, `components/`, `store/cart.ts`, `auth/` (SessionContext y guards), `api/client.ts`, `styles/` |
 | `prisma/` | `schema.prisma`, migración inicial y `seed.ts` |
-| `tests/web/` | Store del carrito, componente Cart y "el admin no puede comprar" en la UI |
-| `tests/server/` | Checkout (403 al admin, precios del servidor), precios en CLP, firma del webhook y conciliación de pagos |
+| `tests/web/` | Store del carrito, componente Cart, la visita sin cuenta y "el admin no puede comprar" en la UI |
+| `tests/server/` | Registro y login, catálogo público, checkout (403 al admin, precios del servidor), precios en CLP, firma del webhook y conciliación de pagos |
 | `docs/` | Esta guía |
 
 ### API
 
 | Método y ruta | Quién puede llamarla | Qué hace |
 | --- | --- | --- |
-| `POST /api/auth/login` | Pública, con límite de 30 intentos cada 15 minutos | Admin con contraseña (bcrypt); cliente solo con correo (crea la cuenta) |
+| `POST /api/auth/register` | Pública, con límite de 30 intentos cada 15 minutos | Crea una cuenta de cliente (correo + contraseña de 8+ caracteres) y deja la sesión iniciada. 409 si el correo ya existe o es el del admin |
+| `POST /api/auth/login` | Pública, con límite de 30 intentos cada 15 minutos | Clientes y admin, siempre con contraseña (bcrypt). No crea cuentas |
 | `POST /api/auth/logout` | Cualquiera | Borra la cookie |
 | `GET /api/auth/me` | Con sesión | Usuario actual |
-| `GET /api/products` | Con sesión | Catálogo |
+| `GET /api/products` | **Pública** | Catálogo |
 | `POST /api/checkout` | Solo cliente | Crea la orden y la preferencia; devuelve `initPoint` |
 | `GET /api/orders/mine` | Con sesión | Compras del usuario |
 | `GET /api/orders/:id` | Dueño o admin | Una orden (para las páginas de retorno) |
@@ -250,7 +252,7 @@ El navegador nunca envía precios. La orden pasa a PAGADA solo cuando llega un w
 
 | Tabla | Campos clave |
 | --- | --- |
-| `User` | `email` único, `role` (enum ADMIN o CLIENTE), `passwordHash` (solo el admin) |
+| `User` | `email` único, `role` (enum ADMIN o CLIENTE), `passwordHash` (bcrypt costo 12; lo tienen el admin y todos los clientes registrados) |
 | `Order` | `userId`, `status` (enum PENDIENTE, PAGADA o RECHAZADA), `total` Int en CLP, `mpPreferenceId`, `mpPaymentId` único |
 | `OrderItem` | `orderId` (borrado en cascada), `productId`, `name`, `unitPrice` Int, `quantity`. Guarda el nombre y el precio del momento de la compra |
 
@@ -268,14 +270,15 @@ El navegador nunca envía precios. La orden pasa a PAGADA solo cuando llega un w
 
 ## Pendientes y riesgos
 
-Lo primero es subir el código a GitHub y probarlo con una base real; después, un pago completo en el sandbox de Mercado Pago.
+Lo que falta es un pago completo en el sandbox de Mercado Pago; sin credenciales de prueba, no se puede avanzar más allá de eso.
 
 ### Próximos pasos, en orden
 
-- [ ] Instalar Node 22 en el equipo de trabajo.
-- [ ] Primer commit y subida a un repositorio privado de GitHub.
-- [ ] Levantar PostgreSQL y correr `npm run db:migrate` + `npm run db:seed` (primera prueba real de la migración).
-- [ ] Probar el login de cliente y de admin en el navegador, en escritorio y en celular.
+- [x] Instalar Node 20.19+ en el equipo de trabajo (hay Node 24.15.0).
+- [x] Primer commit y subida al repositorio privado de GitHub.
+- [x] Levantar PostgreSQL y correr `npm run db:migrate` + `npm run db:seed`: la migración aplicó sin drift.
+- [x] Probar el login de cliente y de admin, y los permisos, contra la base real (vía API).
+- [ ] Revisar la tienda en el navegador, en escritorio y en celular (lo anterior se probó por API, no visualmente): catálogo público, registro, login y carrito.
 - [ ] Crear credenciales de prueba de Mercado Pago Chile y hacer un pago completo con webhook (ver la lista de la sección anterior).
 - [ ] Desplegar en Render (u otro servicio) con Postgres gestionado, siguiendo la sección 5 del `README.md`.
 - [ ] Configurar la URL de producción del webhook y, al salir a producción, las credenciales reales.
@@ -284,9 +287,9 @@ Lo primero es subir el código a GitHub y probarlo con una base real; después, 
 
 | Tema | Detalle | Qué hacer |
 | --- | --- | --- |
-| Migración sin probar | `prisma/migrations/20261011000000_init` se generó con `prisma migrate diff`, sin una base real | Correr `npm run db:migrate` y revisar que no pida crear otra migración |
+| ~~Migración sin probar~~ | Resuelto: `prisma/migrations/20261011000000_init` se aplicó contra PostgreSQL 17 real y `prisma migrate dev` repetido responde "Already in sync" | Nada; repetir la comprobación en el equipo nuevo |
 | SDK `mercadopago` 2.x | `npm audit` avisa de `uuid` (moderado); la solución es la versión 3.x, con cambios importantes | Evaluar pasar a 3.x después de un pago de prueba que funcione con 2.x |
-| Prisma 6.x | Avisos de `deepmerge-ts` solo en la herramienta de línea de comandos, no en lo que corre en el servidor. La configuración `package.json#prisma` (seed) dejará de funcionar en Prisma 7 | Mantener `^6`. Al pasar a 7, migrar a `prisma.config.ts` y cargar `.env` manualmente |
+| Prisma 6.x | La CLI ya avisa que `package.json#prisma` (seed) queda obsoleto y se elimina en Prisma 7; además hay 8.0 en release candidate | Mantener `^6` por ahora. Al subir de versión, migrar a `prisma.config.ts` y cargar `.env` manualmente |
 | Tabla en celular | La tabla de compras se convierte en tarjetas con CSS; algunos lectores de pantalla (Safari) pierden la semántica de tabla | Revisar con VoiceOver; si molesta, agregar roles ARIA explícitos |
 | Orden de tabulación del encabezado en celular | El menú se ve en la segunda fila, pero en el teclado va primero | Menor; revisar si se pide auditoría de accesibilidad |
 | Compras repetidas | Cada "Comprar" crea una orden nueva; un pago rechazado deja esa orden RECHAZADA y el reintento crea otra | Aceptable por ahora; documentado |
@@ -308,7 +311,8 @@ pagos con Mercado Pago Checkout Pro (SDK mercadopago 2.x, CLP); tests con Vitest
 
 Reglas que no se pueden romper:
 - Todos los textos de la interfaz en español de Chile.
-- El administrador (matiasalecornejo@gmail.com) NO puede comprar: ni en la UI ni en la API (403).
+- El catálogo es público: ver productos y armar el carrito no exige cuenta. Comprar sí.
+- El administrador (matiasalecornejo@gmail.com) NO puede comprar: ni en la UI ni en la API (403), y su correo no se puede registrar.
 - Los precios se calculan solo en el servidor desde shared/products.ts; nunca se confía en el navegador.
 - Montos en CLP y siempre enteros.
 - Nunca subir .env ni secretos al repositorio.
@@ -322,7 +326,7 @@ Próxima tarea: <DESCRIBE LO QUE QUIERES HACER>
 ```bash
 node -v                # 20.19 o superior
 npm run typecheck      # tipos del frontend y del servidor
-npm test               # 43 tests al día de hoy
+npm test               # 64 tests al día de hoy
 npm run build          # build de Vite + compilación del servidor
 ```
 
@@ -330,7 +334,8 @@ npm run build          # build de Vite + compilación del servidor
 
 - **Imports del servidor con extensión `.js`** (`import { prisma } from '../db.js'`): el servidor compila con `module: NodeNext`. El frontend importa sin extensión.
 - **Dos `tsconfig`**: `tsconfig.json` (frontend, tests y `shared`, sin emitir) y `tsconfig.server.json` (servidor, emite a `dist-server/`).
-- **`shared/` es la única fuente** de productos y precios (`products.ts`), reglas de perfil (`permissions.ts`: `ADMIN_EMAIL`, `canPurchase`), tipos (`types.ts`) y formato CLP (`format.ts`).
+- **`shared/` es la única fuente** de productos y precios (`products.ts`), reglas de perfil (`permissions.ts`: `ADMIN_EMAIL`, `canPurchase`, `canUseCart`), tipos (`types.ts`) y formato CLP (`format.ts`).
+- **Las contraseñas pasan por `server/lib/passwords.ts`** (`hashPassword`, `verifyPassword`, costo 12 y largo mínimo 8). No se llama a bcrypt directamente en las rutas.
 - **Variables de entorno**: se validan con zod en `server/env.ts` mediante `getEnv()`, que es perezosa para que los tests puedan definirlas antes.
 - **Estilos**: un `.module.scss` por componente, con tokens en `src/styles/_variables.scss` y mixins en `_mixins.scss`. El acento es `#c2410c` (contraste AA con blanco).
 - **Tests del servidor**: Prisma y Mercado Pago se simulan con `vi.mock('../../server/db.js')` y `vi.mock('../../server/lib/mercadopago.js')`. El ayudante está en `tests/server/helpers.ts`.

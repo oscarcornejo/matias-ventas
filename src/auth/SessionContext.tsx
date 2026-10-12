@@ -6,7 +6,8 @@ import type { SessionUser } from '../../shared/types';
 export interface SessionContextValue {
   user: SessionUser | null;
   loading: boolean;
-  login: (email: string, password?: string) => Promise<SessionUser>;
+  login: (email: string, password: string) => Promise<SessionUser>;
+  register: (email: string, password: string) => Promise<SessionUser>;
   logout: () => Promise<void>;
 }
 
@@ -28,10 +29,17 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = useCallback(async (email: string, password?: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     const { user: loggedIn } = await api.login(email, password);
     setUser(loggedIn);
     return loggedIn;
+  }, []);
+
+  // El carrito no se toca al registrarse: lo que la visita armó sin cuenta sigue ahí.
+  const register = useCallback(async (email: string, password: string) => {
+    const { user: created } = await api.register(email, password);
+    setUser(created);
+    return created;
   }, []);
 
   const logout = useCallback(async () => {
@@ -41,7 +49,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
-  const value = useMemo(() => ({ user, loading, login, logout }), [user, loading, login, logout]);
+  const value = useMemo(
+    () => ({ user, loading, login, register, logout }),
+    [user, loading, login, register, logout],
+  );
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
 

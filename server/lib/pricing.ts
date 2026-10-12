@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { findProduct } from '../../shared/products.js';
+import type { PrismaClient } from '@prisma/client';
+import { prisma } from '../db.js';
 
 export const MAX_QUANTITY_PER_PRODUCT = 99;
 
@@ -35,17 +36,31 @@ export interface PricedCart {
 
 export class PricingError extends Error {}
 
-/** Calcula los montos en CLP desde el catálogo del servidor. */
-export function priceCart(items: CheckoutInput['items']): PricedCart {
+/**
+ * Calcula los montos en CLP leyendo el catálogo desde la base de datos.
+ *
+ * El precio que se cobra sale siempre de aquí, nunca del navegador. Un producto
+ * oculto no se puede comprar aunque alguien conserve su id en el carrito.
+ */
+export async function priceCart(
+  items: CheckoutInput['items'],
+  db: PrismaClient = prisma,
+): Promise<PricedCart> {
   const quantities = new Map<string, number>();
   for (const item of items) {
     quantities.set(item.productId, (quantities.get(item.productId) ?? 0) + item.quantity);
   }
 
+  const found = await db.product.findMany({
+    where: { id: { in: [...quantities.keys()] }, visible: true },
+    select: { id: true, name: true, price: true },
+  });
+  const catalog = new Map(found.map((product) => [product.id, product]));
+
   const lines: PricedLine[] = [];
   for (const [productId, quantity] of quantities) {
-    const product = findProduct(productId);
-    if (!product) throw new PricingError(`Producto desconocido: ${productId}`);
+    const product = catalog.get(productId);
+    if (!product) throw new PricingError(`Producto no disponible: ${productId}`);
     if (quantity > MAX_QUANTITY_PER_PRODUCT) {
       throw new PricingError(`Cantidad máxima por producto: ${MAX_QUANTITY_PER_PRODUCT}`);
     }

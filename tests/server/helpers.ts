@@ -5,7 +5,15 @@ import { ADMIN_EMAIL } from '../../shared/permissions';
 /** Cliente Prisma falso: solo los métodos que usan las rutas probadas. */
 export function createPrismaMock() {
   return {
-    user: { findUnique: vi.fn(), upsert: vi.fn() },
+    user: { findUnique: vi.fn(), create: vi.fn(), upsert: vi.fn() },
+    product: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      count: vi.fn(),
+    },
     order: {
       create: vi.fn(),
       update: vi.fn(),

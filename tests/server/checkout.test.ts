@@ -29,6 +29,15 @@ describe('POST /api/checkout', () => {
       ...data,
     }));
     prismaMock.order.update.mockResolvedValue({});
+    // El catálogo vive en la base: el precio que se cobra sale de aquí.
+    prismaMock.product.findMany.mockImplementation(
+      async ({ where }: { where: { id: { in: string[] } } }) =>
+        [
+          { id: 'p-chirlito', name: 'Chirlito Suffle', price: 300 },
+          { id: 'p-grosso', name: 'Grosso Crunch', price: 200 },
+          { id: 'p-alfajor', name: 'Alfajor Panchito', price: 400 },
+        ].filter((product) => where.id.in.includes(product.id)),
+    );
     createPreferenceMock.mockResolvedValue({
       id: 'pref-1',
       initPoint: 'https://www.mercadopago.cl/checkout/v1/redirect?pref_id=pref-1',
@@ -40,7 +49,7 @@ describe('POST /api/checkout', () => {
       const response = await request(app)
         .post('/api/checkout')
         .set('Cookie', await sessionCookie('admin'))
-        .send({ items: [{ productId: 'chirlito-suffle', quantity: 1 }] });
+        .send({ items: [{ productId: 'p-chirlito', quantity: 1 }] });
 
       expect(response.status).toBe(403);
       expect(response.body.error).toMatch(/administrador no puede realizar compras/);
@@ -59,7 +68,7 @@ describe('POST /api/checkout', () => {
       const response = await request(app)
         .post('/api/checkout')
         .set('Cookie', `${SESSION_COOKIE}=${forged}`)
-        .send({ items: [{ productId: 'chirlito-suffle', quantity: 1 }] });
+        .send({ items: [{ productId: 'p-chirlito', quantity: 1 }] });
 
       expect(response.status).toBe(403);
       expect(prismaMock.order.create).not.toHaveBeenCalled();
@@ -69,7 +78,7 @@ describe('POST /api/checkout', () => {
   it('sin sesión responde 401', async () => {
     const response = await request(app)
       .post('/api/checkout')
-      .send({ items: [{ productId: 'chirlito-suffle', quantity: 1 }] });
+      .send({ items: [{ productId: 'p-chirlito', quantity: 1 }] });
     expect(response.status).toBe(401);
   });
 
@@ -83,7 +92,7 @@ describe('POST /api/checkout', () => {
     const response = await request(app)
       .post('/api/checkout')
       .set('Cookie', `${SESSION_COOKIE}=${forged}`)
-      .send({ items: [{ productId: 'chirlito-suffle', quantity: 1 }] });
+      .send({ items: [{ productId: 'p-chirlito', quantity: 1 }] });
     expect(response.status).toBe(401);
   });
 
@@ -94,8 +103,8 @@ describe('POST /api/checkout', () => {
       .send({
         items: [
           // Precio manipulado desde el navegador: debe ignorarse.
-          { productId: 'chirlito-suffle', quantity: 2, price: 1, unitPrice: 1 },
-          { productId: 'alfajor-panchito', quantity: 1 },
+          { productId: 'p-chirlito', quantity: 2, price: 1, unitPrice: 1 },
+          { productId: 'p-alfajor', quantity: 1 },
         ],
       });
 
@@ -112,15 +121,15 @@ describe('POST /api/checkout', () => {
         total: 1000, // 2 × 300 + 1 × 400
         items: {
           create: [
-            { productId: 'chirlito-suffle', name: 'Chirlito Suffle', unitPrice: 300, quantity: 2 },
-            { productId: 'alfajor-panchito', name: 'Alfajor Panchito', unitPrice: 400, quantity: 1 },
+            { productId: 'p-chirlito', name: 'Chirlito Suffle', unitPrice: 300, quantity: 2 },
+            { productId: 'p-alfajor', name: 'Alfajor Panchito', unitPrice: 400, quantity: 1 },
           ],
         },
       },
     });
     expect(createPreferenceMock).toHaveBeenCalledWith('orden-123', [
-      { productId: 'chirlito-suffle', name: 'Chirlito Suffle', unitPrice: 300, quantity: 2 },
-      { productId: 'alfajor-panchito', name: 'Alfajor Panchito', unitPrice: 400, quantity: 1 },
+      { productId: 'p-chirlito', name: 'Chirlito Suffle', unitPrice: 300, quantity: 2 },
+      { productId: 'p-alfajor', name: 'Alfajor Panchito', unitPrice: 400, quantity: 1 },
     ]);
     expect(prismaMock.order.update).toHaveBeenCalledWith({
       where: { id: 'orden-123' },
@@ -139,7 +148,7 @@ describe('POST /api/checkout', () => {
     const negative = await request(app)
       .post('/api/checkout')
       .set('Cookie', cookie)
-      .send({ items: [{ productId: 'grosso-crunch', quantity: -3 }] });
+      .send({ items: [{ productId: 'p-grosso', quantity: -3 }] });
     expect(negative.status).toBe(400);
 
     const empty = await request(app).post('/api/checkout').set('Cookie', cookie).send({ items: [] });
@@ -155,7 +164,7 @@ describe('POST /api/checkout', () => {
     const response = await request(app)
       .post('/api/checkout')
       .set('Cookie', await sessionCookie('cliente'))
-      .send({ items: [{ productId: 'grosso-crunch', quantity: 1 }] });
+      .send({ items: [{ productId: 'p-grosso', quantity: 1 }] });
 
     expect(response.status).toBe(502);
     expect(prismaMock.order.delete).toHaveBeenCalledWith({ where: { id: 'orden-123' } });

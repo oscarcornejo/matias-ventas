@@ -19,3 +19,11 @@ export function roleForEmail(email: string): Role {
 export function canPurchase(role: Role): boolean {
   return role === 'CLIENTE';
 }
+
+/**
+ * Quién ve el carrito: los clientes y las visitas sin cuenta (`null`), que pueden armarlo
+ * y registrarse al momento de pagar. El administrador nunca lo ve.
+ */
+export function canUseCart(role: Role | null): boolean {
+  return role === null || canPurchase(role);
+}

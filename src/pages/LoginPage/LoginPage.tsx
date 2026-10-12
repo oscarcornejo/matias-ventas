@@ -1,10 +1,15 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router';
 import { useSession } from '../../auth/SessionContext';
 import { ApiError } from '../../api/client';
-import { isAdminEmail } from '../../../shared/permissions';
-import { PRODUCTS } from '../../../shared/products';
-import styles from './LoginPage.module.scss';
+import styles from '../auth.module.scss';
+
+/**
+ * Decoración de la columna de marca. Son fijos a propósito: el catálogo real lo
+ * administra Matías y puede cambiar, pero esta ilustración no debería depender de
+ * una llamada a la API para dibujarse.
+ */
+const DULCES = ['🍪', '🍬', '🍫'];
 
 export function LoginPage() {
   const { user, loading, login } = useSession();
@@ -18,8 +23,6 @@ export function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const errorRef = useRef<HTMLParagraphElement>(null);
 
-  const needsPassword = isAdminEmail(email);
-
   useEffect(() => {
     if (error) errorRef.current?.focus();
   }, [error]);
@@ -31,7 +34,7 @@ export function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      const loggedIn = await login(email, needsPassword ? password : undefined);
+      const loggedIn = await login(email, password);
       navigate(loggedIn.role === 'ADMIN' && from === '/' ? '/admin/compras' : from, { replace: true });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'No pudimos iniciar sesión. Inténtalo nuevamente.');
@@ -43,18 +46,16 @@ export function LoginPage() {
     <div className={styles.page}>
       <div className={styles.hero} aria-hidden="true">
         <div className={styles.emojis}>
-          {PRODUCTS.map((product) => (
-            <span key={product.id}>{product.emoji}</span>
+          {DULCES.map((dulce) => (
+            <span key={dulce}>{dulce}</span>
           ))}
         </div>
         <p className={styles.tagline}>Tus dulces favoritos, a un clic.</p>
       </div>
 
       <section className={styles.panel} aria-labelledby="acceso-titulo">
-        <h1 id="acceso-titulo">Ingresa a la tienda</h1>
-        <p className={styles.lead}>
-          Escribe tu correo electrónico. Si es tu primera vez, crearemos tu cuenta al instante.
-        </p>
+        <h1 id="acceso-titulo">Inicia sesión</h1>
+        <p className={styles.lead}>Entra con el correo y la contraseña de tu cuenta.</p>
 
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.field}>
@@ -66,6 +67,7 @@ export function LoginPage() {
               inputMode="email"
               autoComplete="email"
               required
+              maxLength={254}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="nombre@correo.cl"
@@ -74,22 +76,20 @@ export function LoginPage() {
             />
           </div>
 
-          {needsPassword && (
-            <div className={styles.field}>
-              <label htmlFor="password">Contraseña</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                aria-invalid={error ? true : undefined}
-                aria-describedby={error ? 'acceso-error' : undefined}
-              />
-            </div>
-          )}
+          <div className={styles.field}>
+            <label htmlFor="password">Contraseña</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? 'acceso-error' : undefined}
+            />
+          </div>
 
           {error && (
             <p id="acceso-error" ref={errorRef} tabIndex={-1} className={styles.error} role="alert">
@@ -101,6 +101,10 @@ export function LoginPage() {
             {submitting ? 'Ingresando…' : 'Ingresar'}
           </button>
         </form>
+
+        <p className={styles.alt}>
+          ¿No tienes cuenta? <Link to="/registro" state={{ from }}>Crear cuenta</Link>
+        </p>
       </section>
     </div>
   );

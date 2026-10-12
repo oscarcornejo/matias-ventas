@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { ensureAdmin } from '../server/lib/admin.js';
+import { seedCatalog } from '../server/lib/seed-catalog.js';
 
 const prisma = new PrismaClient();
 
@@ -12,6 +13,13 @@ if (!password) {
 try {
   await ensureAdmin(prisma, password);
   console.log('Administrador listo.');
+
+  const sembrados = await seedCatalog(prisma);
+  console.log(
+    sembrados > 0
+      ? `Catálogo inicial creado con ${sembrados} productos.`
+      : 'El catálogo ya tiene productos: no se tocó.',
+  );
 } finally {
   await prisma.$disconnect();
 }

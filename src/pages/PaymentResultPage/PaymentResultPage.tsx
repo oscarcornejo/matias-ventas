@@ -4,27 +4,28 @@ import { api } from '../../api/client';
 import { useCartStore } from '../../store/cart';
 import { StatusBadge } from '../../components/StatusBadge/StatusBadge';
 import { Loading } from '../../components/Loading/Loading';
+import { Icon, type IconName } from '../../components/Icon/Icon';
 import { formatCLP } from '../../../shared/format';
 import type { OrderDTO } from '../../../shared/types';
 import styles from './PaymentResultPage.module.scss';
 
 export type PaymentResult = 'aprobado' | 'pendiente' | 'rechazado';
 
-const COPY: Record<PaymentResult, { icon: string; title: string; text: string }> = {
+const COPY: Record<PaymentResult, { icon: IconName; title: string; text: string }> = {
   aprobado: {
-    icon: '🎉',
-    title: '¡Pago aprobado!',
-    text: 'Gracias por tu compra. Ya estamos preparando tus dulces.',
+    icon: 'listo',
+    title: 'Pago aprobado',
+    text: 'Listo. Matías ya ve tu compra y te la entrega en el colegio.',
   },
   pendiente: {
-    icon: '⏳',
+    icon: 'reloj',
     title: 'Pago pendiente',
-    text: 'Mercado Pago está procesando tu pago. Te avisaremos en "Mis compras" cuando se confirme.',
+    text: 'Mercado Pago todavía está procesando tu pago. Cuando se confirme lo verás en "Mis compras".',
   },
   rechazado: {
-    icon: '😕',
+    icon: 'cerrar',
     title: 'Pago rechazado',
-    text: 'No se pudo completar el pago. Tu carrito sigue guardado para que lo intentes nuevamente.',
+    text: 'No se pudo completar el pago. Tu carrito sigue guardado para que lo intentes de nuevo.',
   },
 };
 
@@ -83,8 +84,8 @@ export function PaymentResultPage({ result }: { result: PaymentResult }) {
   return (
     <section className={styles.page} aria-labelledby="resultado-titulo">
       <div className={`${styles.card} ${styles[result] ?? ''}`}>
-        <span className={styles.icon} aria-hidden="true">
-          {copy.icon}
+        <span className={styles.icon}>
+          <Icon name={copy.icon} size={28} />
         </span>
         <h1 id="resultado-titulo" ref={headingRef} tabIndex={-1}>
           {copy.title}

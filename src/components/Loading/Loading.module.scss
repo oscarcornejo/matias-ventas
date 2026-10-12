@@ -1,4 +1,5 @@
 @use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
 
 .loading {
   display: flex;
@@ -14,12 +15,22 @@
   height: 1.25rem;
   border: 2px solid $color-border;
   border-top-color: $color-accent;
-  border-radius: 50%;
-  animation: spin 800ms linear infinite;
+  border-radius: $radius-pill;
+  animation: girar 700ms linear infinite;
 }
 
-@keyframes spin {
+@keyframes girar {
   to {
     transform: rotate(360deg);
+  }
+}
+
+// El apagado global de movimiento detendría el spinner, y entonces un anillo
+// quieto sería la única pista de que la app está esperando: parece rota, no
+// ocupada. Se mantiene girando, más lento, que es lo que pide la preferencia.
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 1.8s !important;
+    animation-iteration-count: infinite !important;
   }
 }
