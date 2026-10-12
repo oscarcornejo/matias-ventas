@@ -146,6 +146,7 @@ npm test
 ## Estructura
 
 ```
+├── docs/              CONTINUAR.md: guía para seguir el proyecto en otro equipo
 ├── prisma/            schema.prisma, migraciones y seed del administrador
 ├── shared/            catálogo y precios, permisos, tipos y formato CLP (front + back)
 ├── server/            API Express: auth, checkout, órdenes, webhook de Mercado Pago
