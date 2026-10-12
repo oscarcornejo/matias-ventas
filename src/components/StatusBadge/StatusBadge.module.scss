@@ -1,0 +1,27 @@
+@use '../../styles/variables' as *;
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-1;
+  padding: 0.2rem 0.65rem;
+  border-radius: $radius-pill;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pending {
+  background: $color-pending-bg;
+  color: $color-pending-text;
+}
+
+.paid {
+  background: $color-paid-bg;
+  color: $color-paid-text;
+}
+
+.rejected {
+  background: $color-rejected-bg;
+  color: $color-rejected-text;
+}

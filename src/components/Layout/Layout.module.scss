@@ -1,0 +1,42 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.skipLink {
+  @include button-primary;
+  position: absolute;
+  top: $space-2;
+  left: $space-2;
+  z-index: 100;
+  transform: translateY(-200%);
+
+  &:focus {
+    transform: none;
+  }
+}
+
+.main {
+  max-width: $content-max;
+  min-height: calc(100vh - #{$header-height} - 4rem);
+  margin: 0 auto;
+  padding: $space-5 $space-4 $space-7;
+
+  @include up($bp-md) {
+    padding: $space-6 $space-5 $space-7;
+  }
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.footer {
+  padding: $space-5 $space-4 calc(#{$space-5} + 4.5rem);
+  border-top: 1px solid $color-border;
+  color: $color-text-muted;
+  font-size: 0.8125rem;
+  text-align: center;
+
+  @include up($bp-lg) {
+    padding-bottom: $space-5;
+  }
+}

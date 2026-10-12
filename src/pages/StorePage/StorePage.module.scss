@@ -1,0 +1,104 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+// Celular: productos y carrito apilados en una columna. Escritorio: carrito lateral fijo.
+.withCart {
+  display: grid;
+  gap: $space-6;
+
+  @include up($bp-lg) {
+    grid-template-columns: minmax(0, 1fr) 22rem;
+    align-items: start;
+  }
+}
+
+.catalog {
+  display: flex;
+  flex-direction: column;
+  gap: $space-5;
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+}
+
+.subtitle {
+  color: $color-text-muted;
+}
+
+.adminNote {
+  padding: $space-3 $space-4;
+  border: 1px solid $color-border;
+  border-left: 4px solid $color-accent;
+  border-radius: $radius-sm;
+  background: $color-surface;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $space-4;
+
+  @include up(30rem) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @include up($bp-md) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: $space-5;
+  }
+}
+
+.cartColumn {
+  @include up($bp-lg) {
+    position: sticky;
+    top: calc(#{$header-height} + #{$space-4});
+  }
+}
+
+.mobileBar {
+  position: fixed;
+  right: $space-3;
+  bottom: calc(#{$space-3} + env(safe-area-inset-bottom, 0px));
+  left: $space-3;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  padding: $space-2 $space-2 $space-2 $space-4;
+  border-radius: $radius-pill;
+  background: $color-text;
+  color: $color-bg;
+  box-shadow: 0 10px 30px rgba(31, 26, 23, 0.25);
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+
+  @include up($bp-lg) {
+    display: none;
+  }
+}
+
+.mobileBarLabel {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.mobileBarTotal {
+  font-size: 1.125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.mobileBarLink {
+  @include button-primary;
+
+  &:focus-visible {
+    outline-color: #93c5fd;
+  }
+}

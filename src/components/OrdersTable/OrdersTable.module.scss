@@ -1,0 +1,92 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.wrapper {
+  @include up($bp-md) {
+    @include card;
+    overflow-x: auto;
+  }
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+
+  th,
+  td {
+    padding: $space-3 $space-4;
+    text-align: left;
+    vertical-align: middle;
+  }
+
+  thead th {
+    background: $color-surface;
+    color: $color-text-muted;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  tbody tr + tr td {
+    border-top: 1px solid $color-border;
+  }
+
+  // Celular: cada orden es una tarjeta con etiquetas por campo.
+  @media (max-width: calc(#{$bp-md} - 1px)) {
+    thead {
+      @include visually-hidden;
+    }
+
+    tbody {
+      display: flex;
+      flex-direction: column;
+      gap: $space-3;
+    }
+
+    tr {
+      @include card;
+      display: block;
+      padding: $space-2 0;
+    }
+
+    tbody tr + tr td {
+      border-top: 0;
+    }
+
+    td {
+      display: flex;
+      justify-content: space-between;
+      gap: $space-4;
+      padding: $space-2 $space-4;
+      text-align: right;
+
+      &::before {
+        content: attr(data-label);
+        flex-shrink: 0;
+        color: $color-text-muted;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        text-align: left;
+      }
+    }
+  }
+}
+
+.numeric {
+  font-variant-numeric: tabular-nums;
+
+  @include up($bp-md) {
+    text-align: right !important;
+  }
+}
+
+.total {
+  font-weight: 700;
+}
+
+.customer {
+  overflow-wrap: anywhere;
+}

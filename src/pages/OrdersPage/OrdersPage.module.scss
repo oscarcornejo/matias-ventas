@@ -1,0 +1,72 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: $space-5;
+}
+
+.headRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+}
+
+.refresh {
+  @include button-secondary;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: $space-3;
+  margin: 0;
+
+  > div {
+    @include card;
+    padding: $space-3 $space-4;
+  }
+
+  dt {
+    color: $color-text-muted;
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  dd {
+    margin: 0;
+    font-size: clamp(1.125rem, 1rem + 1vw, 1.5rem);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: $space-3;
+  padding: $space-5;
+  border: 1px dashed $color-border;
+  border-radius: $radius-md;
+  color: $color-text-muted;
+}
+
+.cta {
+  @include button-primary;
+}
+
+.error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  padding: $space-4;
+  border-radius: $radius-md;
+  background: $color-rejected-bg;
+  color: $color-rejected-text;
+}

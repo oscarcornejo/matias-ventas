@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mati
+      POSTGRES_PASSWORD: mati
+      POSTGRES_DB: mati_ventas
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U mati -d mati_ventas']
+      interval: 5s
+      retries: 10
+
+volumes:
+  pgdata:

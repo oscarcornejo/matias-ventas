@@ -1,0 +1,25 @@
+@use '../../styles/variables' as *;
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-3;
+  padding: $space-7 $space-4;
+  color: $color-text-muted;
+}
+
+.spinner {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid $color-border;
+  border-top-color: $color-accent;
+  border-radius: 50%;
+  animation: spin 800ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

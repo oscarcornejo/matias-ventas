@@ -1,0 +1,12 @@
+node_modules/
+dist/
+dist-server/
+coverage/
+
+# Secretos: nunca subir credenciales
+.env
+.env.*
+!.env.example
+
+.DS_Store
+*.log

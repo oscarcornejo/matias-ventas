@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  CLIENTE
+}
+
+enum OrderStatus {
+  PENDIENTE
+  PAGADA
+  RECHAZADA
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  role         Role     @default(CLIENTE)
+  /// Solo el administrador tiene contraseña; se guarda únicamente su hash bcrypt.
+  passwordHash String?
+  createdAt    DateTime @default(now())
+  orders       Order[]
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  userId         String
+  user           User        @relation(fields: [userId], references: [id])
+  status         OrderStatus @default(PENDIENTE)
+  /// Total en pesos chilenos (CLP, entero).
+  total          Int
+  mpPreferenceId String?
+  mpPaymentId    String?     @unique
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  items          OrderItem[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  order     Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  /// Nombre y precio quedan fijados al momento de la compra.
+  name      String
+  unitPrice Int
+  quantity  Int
+
+  @@index([orderId])
+}

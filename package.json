@@ -1,0 +1,61 @@
+{
+  "name": "mati-ventas",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n web,api -c magenta,cyan \"vite\" \"tsx watch server/index.ts\"",
+    "build": "prisma generate && tsc -p tsconfig.json && vite build && tsc -p tsconfig.server.json",
+    "start": "node dist-server/server/index.js",
+    "preview": "npm run build && npm start",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.server.json --noEmit",
+    "db:up": "docker compose up -d",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "prisma db seed",
+    "postinstall": "prisma generate"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.16.0",
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
+    "express": "^5.1.0",
+    "express-rate-limit": "^7.5.0",
+    "jose": "^6.0.11",
+    "mercadopago": "^2.8.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router": "^7.6.0",
+    "zod": "^3.25.0",
+    "zustand": "^5.0.5"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/cookie-parser": "^1.4.8",
+    "@types/express": "^5.0.2",
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@types/supertest": "^6.0.3",
+    "@vitejs/plugin-react": "^4.5.0",
+    "concurrently": "^9.1.2",
+    "jsdom": "^26.1.0",
+    "prisma": "^6.16.0",
+    "sass": "^1.89.0",
+    "supertest": "^7.1.1",
+    "tsx": "^4.19.4",
+    "typescript": "~5.8.3",
+    "vite": "^7.0.0",
+    "vitest": "^5.0.3"
+  }
+}

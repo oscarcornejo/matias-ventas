@@ -1,0 +1,105 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.page {
+  display: flex;
+  justify-content: center;
+}
+
+.card {
+  @include card;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-3;
+  width: 100%;
+  max-width: 32rem;
+  padding: $space-6 $space-4;
+  border-top: 6px solid $color-border;
+  text-align: center;
+
+  @include up($bp-md) {
+    padding: $space-7 $space-6;
+  }
+
+  h1:focus {
+    outline: none;
+  }
+
+  h1:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.aprobado {
+  border-top-color: $color-paid-text;
+}
+
+.pendiente {
+  border-top-color: #d97706;
+}
+
+.rechazado {
+  border-top-color: $color-rejected-text;
+}
+
+.icon {
+  font-size: 3.5rem;
+  line-height: 1;
+}
+
+.text {
+  color: $color-text-muted;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  width: 100%;
+  margin: $space-3 0 0;
+  padding: $space-4;
+  border-radius: $radius-md;
+  background: $color-surface;
+  text-align: left;
+
+  > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $space-3;
+  }
+
+  dt {
+    color: $color-text-muted;
+    font-size: 0.875rem;
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8125rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: $space-3;
+  margin-top: $space-4;
+}
+
+.primary {
+  @include button-primary;
+}
+
+.secondary {
+  @include button-secondary;
+}
